@@ -16,7 +16,7 @@ async function getListing(id: string): Promise<Listing | null> {
   return data
 }
 
-async function getRelated(listing: Listing): Promise<Listing[]> {
+async function getRelated(listing: Listing): Promise<any[]> {
   if (!listing.category_id) return []
   const { data } = await supabase
     .from('listings')
