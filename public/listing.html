@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>Listing – MyPahad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--g:#1a5c3a;--gl:#e8f5ee;--ac:#e05a2b;--bg:#f0f0ee;--s:#fff;--t:#111;--t2:#4a4a4a;--t3:#888;--bd:#ddd;--r:6px;--rs:4px;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html{font-size:13px;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-height:100vh;padding-bottom:62px;}
+a{color:inherit;text-decoration:none;}
+button{cursor:pointer;font-family:inherit;}
+.shim{background:linear-gradient(90deg,#eee 25%,#e2e2e2 50%,#eee 75%);background-size:200% 100%;animation:sh 1.2s infinite;}
+@keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
+#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:7px 16px;border-radius:20px;z-index:9999;font-size:11px;display:none;white-space:nowrap;}
+
+.bbar{background:var(--g);padding:7px 10px;display:flex;align-items:center;gap:6px;position:sticky;top:0;z-index:100;}
+.bbtn{background:none;border:none;color:#fff;padding:0;display:flex;}
+.btitle{font-size:12px;font-weight:600;color:#fff;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+
+.lstimg{width:100%;aspect-ratio:1;object-fit:cover;display:block;background:var(--gl);}
+.lstph{width:100%;aspect-ratio:1;background:var(--gl);display:flex;align-items:center;justify-content:center;}
+.lstbody{background:#fff;padding:12px;}
+.lstname{font-size:15px;font-weight:700;line-height:1.3;}
+.lstprice{font-size:17px;color:var(--g);font-weight:700;margin-top:4px;}
+.lstdesc{font-size:12px;color:var(--t2);margin-top:8px;line-height:1.7;}
+
+.selcard{background:#fff;padding:12px;border-top:5px solid var(--bg);}
+.sellbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--t3);margin-bottom:7px;}
+.selrow{display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px;border-radius:var(--r);border:1px solid var(--bd);}
+.selrow:active{background:var(--gl);}
+.seldp{width:38px;height:38px;border-radius:50%;overflow:hidden;border:1px solid var(--bd);background:var(--gl);flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.seldp img{width:100%;height:100%;object-fit:cover;}
+.selnm{font-size:12px;font-weight:600;}
+.selar{font-size:10px;color:var(--t3);margin-top:1px;}
+
+/* STICKY BOTTOM CTA */
+.sticta{position:fixed;bottom:0;left:0;right:0;background:#fff;padding:8px 12px;border-top:1px solid var(--bd);padding-bottom:calc(8px + env(safe-area-inset-bottom,0));}
+.bproceed{background:var(--g);color:#fff;border:none;padding:12px;border-radius:var(--r);font-size:14px;font-weight:700;width:100%;display:flex;align-items:center;justify-content:center;gap:6px;}
+.bproceed.disabled{opacity:0.45;pointer-events:none;}
+.bproceed-hint{text-align:center;font-size:10px;color:var(--t3);margin-top:4px;}
+
+/* RELATED */
+.reltitle{font-size:11px;font-weight:600;padding:10px 10px 5px;background:var(--bg);}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:0 10px 8px;}
+.gc{background:#fff;border-radius:var(--r);border:1px solid var(--bd);overflow:hidden;cursor:pointer;}
+.gcimg{width:100%;aspect-ratio:1;object-fit:cover;display:block;}
+.gcph{width:100%;aspect-ratio:1;background:var(--gl);display:flex;align-items:center;justify-content:center;}
+.gcb{padding:4px 5px 6px;}
+.gcn{font-size:10px;font-weight:500;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+.gcp{font-size:10px;color:var(--g);font-weight:600;margin-top:1px;}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+
+<div class="bbar">
+  <button class="bbtn" onclick="goBack()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+  </button>
+  <span class="btitle" id="ltitle"></span>
+</div>
+
+<div id="lcontent"></div>
+
+<div class="sticta">
+  <a id="wa-btn" href="#" class="bproceed disabled" target="_blank">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M5.296 0C2.38 0 0 2.382 0 5.296c0 1.74.843 3.267 2.145 4.23L1.044 13.452l4.068-1.065a5.28 5.28 0 002.523.641c2.916 0 5.296-2.382 5.296-5.296S8.212 2.44 5.296 2.44V0zm0 10.464a3.182 3.182 0 01-1.617-.44l-.116-.069-2.041.535.544-1.988-.076-.122a3.165 3.165 0 01-.486-1.688 3.18 3.18 0 013.174-3.18 3.18 3.18 0 013.18 3.18 3.18 3.18 0 01-3.18 3.18V10.464z" opacity="0"/></svg>
+    Contact on WhatsApp
+  </a>
+  <div class="bproceed-hint" id="wa-hint"></div>
+</div>
+
+<script>
+const SU='https://khbotkadtbkwqxjxlyhm.supabase.co';
+const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtoYm90a2FkdGJrd3F4anhseWhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5NTU4OTAsImV4cCI6MjA4ODUzMTg5MH0.MnNTuoONyBTGZeO1qYyRUTtkRdFreK0OrOcYk66pWxs';
+const {createClient}=supabase;const sb=createClient(SU,SK);
+let sid=localStorage.getItem('mp_sid');if(!sid){sid=crypto.randomUUID();localStorage.setItem('mp_sid',sid);}
+let area=null;
+
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',2400);}
+function getArea(){try{return JSON.parse(localStorage.getItem('mp_area'));}catch{return null;}}
+function goBack(){
+  const back=localStorage.getItem('mp_lst_back')||'home.html';
+  window.location.href=back;
+}
+
+// Robust WhatsApp number formatter
+function fmtWa(raw){
+  if(!raw&&raw!==0)return '';
+  let num=String(raw).trim().replace(/\D/g,'');
+  // Remove country code if present
+  if(num.startsWith('91')&&num.length===12)num=num.slice(2);
+  if(num.startsWith('0')&&num.length===11)num=num.slice(1);
+  if(num.length!==10)return '';
+  return '91'+num;
+}
+
+function openProf(bizId){
+  localStorage.setItem('mp_view_biz',bizId);
+  localStorage.setItem('mp_prof_back','listing.html');
+  window.location.href='profile.html';
+}
+function openLst(l){
+  localStorage.setItem('mp_view_lst',JSON.stringify(l));
+  localStorage.setItem('mp_lst_back','listing.html');
+  window.location.href='listing.html';
+}
+
+async function init(){
+  area=getArea();
+  const raw=localStorage.getItem('mp_view_lst');
+  if(!raw){window.location.href='home.html';return;}
+  let l;try{l=JSON.parse(raw);}catch{window.location.href='home.html';return;}
+
+  document.getElementById('ltitle').textContent=l.name;
+  document.title=l.name+' – MyPahad';
+
+  sb.from('analytics').insert({area_id:area?.id,event_type:'listing_click',session_id:sid});
+
+  const bizId=l.businesses?.id||l.business_id;
+  const bizName=l.businesses?.business_name||'';
+  const rawWa=l.businesses?.whatsapp||'';
+  const waNum=fmtWa(rawWa);
+
+  const msg=`Hi *${bizName}*,\n\nI am interested in: *${l.name}*${l.price?' – '+l.price:''}\n\nI found you on MyPahad.in`;
+
+  const waBtn=document.getElementById('wa-btn');
+  const waHint=document.getElementById('wa-hint');
+
+  if(waNum){
+    const waUrl=`https://wa.me/${waNum}?text=${encodeURIComponent(msg)}`;
+    waBtn.href=waUrl;
+    waBtn.classList.remove('disabled');
+    waBtn.onclick=()=>sb.from('analytics').insert({area_id:area?.id,event_type:'whatsapp_click',session_id:sid});
+  } else {
+    // Try fetching from business record directly
+    if(bizId){
+      const {data:biz}=await sb.from('businesses').select('whatsapp').eq('id',bizId).single();
+      const freshNum=fmtWa(biz?.whatsapp||'');
+      if(freshNum){
+        const waUrl=`https://wa.me/${freshNum}?text=${encodeURIComponent(msg)}`;
+        waBtn.href=waUrl;
+        waBtn.classList.remove('disabled');
+        waBtn.onclick=()=>sb.from('analytics').insert({area_id:area?.id,event_type:'whatsapp_click',session_id:sid});
+      } else {
+        waBtn.textContent='No WhatsApp number';
+        waHint.textContent='Visit the business profile to contact them';
+      }
+    }
+  }
+
+  const c=document.getElementById('lcontent');
+  c.innerHTML=`
+    ${l.image_url?`<img class="lstimg" src="${l.image_url}" alt="${l.name}"/>`:`<div class="lstph"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>`}
+    <div class="lstbody">
+      <div class="lstname">${l.name}</div>
+      ${l.price?`<div class="lstprice">${l.price}</div>`:''}
+      ${l.description?`<div class="lstdesc">${l.description}</div>`:''}
+    </div>
+    <div class="selcard">
+      <div class="sellbl">Sold by</div>
+      <div class="selrow" onclick="openProf('${bizId}')">
+        <div class="seldp" id="sdp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></div>
+        <div style="flex:1;min-width:0;">
+          <div class="selnm">${bizName}</div>
+          <div class="selar" id="sar">View profile →</div>
+        </div>
+        <svg style="color:var(--t3)" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+    </div>
+    <div id="relSec"></div>`;
+
+  // Load business dp + area async
+  if(bizId){
+    sb.from('businesses').select('dp_url,areas(name)').eq('id',bizId).single().then(({data:biz})=>{
+      if(biz?.dp_url){const w=document.getElementById('sdp');if(w)w.innerHTML=`<img src="${biz.dp_url}"/>`;}
+      if(biz?.areas?.name){const a=document.getElementById('sar');if(a)a.textContent=biz.areas.name+' · View profile →';}
+    });
+    // Related listings
+    if(l.category_id){
+      const {data:rel}=await sb.from('listings').select('*,businesses!inner(id,business_name,whatsapp,area_id,is_approved,is_active)').eq('category_id',l.category_id).eq('businesses.is_approved',true).eq('businesses.is_active',true).eq('is_available',true).neq('id',l.id).limit(9);
+      if(rel&&rel.length){
+        const rs=document.getElementById('relSec');
+        if(rs){
+          rs.innerHTML=`<div class="reltitle">More like this</div>`;
+          const g=document.createElement('div');g.className='g3';
+          rel.forEach(r=>{
+            const card=document.createElement('div');card.className='gc';
+            card.innerHTML=`${r.image_url?`<img class="gcimg" src="${r.image_url}" loading="lazy"/>`:`<div class="gcph"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div>`}<div class="gcb"><div class="gcn">${r.name}</div>${r.price?`<div class="gcp">${r.price}</div>`:''}</div>`;
+            card.onclick=()=>openLst(r);g.appendChild(card);
+          });
+          rs.appendChild(g);
+        }
+      }
+    }
+  }
+}
+
+init();
+</script>
+</body>
+</html>

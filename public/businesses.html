@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>Businesses – MyPahad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--g:#1a5c3a;--gl:#e8f5ee;--ac:#e05a2b;--bg:#f0f0ee;--s:#fff;--t:#111;--t2:#4a4a4a;--t3:#888;--bd:#ddd;--r:6px;--rs:4px;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html{font-size:13px;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-height:100vh;padding-bottom:60px;}
+a{color:inherit;text-decoration:none;}
+button{cursor:pointer;font-family:inherit;}
+.shim{background:linear-gradient(90deg,#eee 25%,#e2e2e2 50%,#eee 75%);background-size:200% 100%;animation:sh 1.2s infinite;}
+@keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
+#toast{position:fixed;bottom:72px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:7px 16px;border-radius:20px;z-index:9999;font-size:11px;display:none;white-space:nowrap;}
+
+/* TOP */
+.topbar{background:var(--g);padding:9px 12px;position:sticky;top:0;z-index:100;}
+.topbar-title{font-size:14px;font-weight:700;color:#fff;}
+.topbar-sub{font-size:10px;color:rgba(255,255,255,0.6);margin-top:1px;}
+
+/* CTA BUTTONS */
+.cta-strip{display:flex;gap:8px;padding:12px 12px 8px;}
+.cta-register{flex:1;background:var(--g);color:#fff;border:none;padding:10px 12px;border-radius:var(--r);font-size:12px;font-weight:600;text-align:center;display:flex;align-items:center;justify-content:center;gap:5px;}
+.cta-login{flex:1;background:#fff;color:var(--g);border:2px solid var(--g);padding:10px 12px;border-radius:var(--r);font-size:12px;font-weight:600;text-align:center;display:flex;align-items:center;justify-content:center;gap:5px;}
+
+/* FILTER CHIPS */
+.frow{display:flex;gap:5px;overflow-x:auto;padding:0 12px 10px;scrollbar-width:none;}
+.frow::-webkit-scrollbar{display:none;}
+.chip{white-space:nowrap;padding:4px 10px;border-radius:var(--rs);border:1px solid var(--bd);background:#fff;font-size:11px;color:var(--t2);flex-shrink:0;}
+.chip.on{background:var(--g);color:#fff;border-color:var(--g);}
+
+/* BUSINESS CARDS */
+.biz-list{padding:0 12px;}
+.biz-card{background:#fff;border-radius:var(--r);border:1px solid var(--bd);margin-bottom:8px;overflow:hidden;cursor:pointer;display:flex;gap:10px;padding:10px;align-items:flex-start;}
+.biz-card:active{background:var(--gl);}
+.biz-dp{width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid var(--gl);flex-shrink:0;background:var(--gl);display:flex;align-items:center;justify-content:center;}
+.biz-dp img{width:52px;height:52px;border-radius:50%;object-fit:cover;}
+.biz-info{flex:1;min-width:0;}
+.biz-name{font-size:13px;font-weight:600;line-height:1.3;}
+.biz-cat{font-size:10px;color:var(--t3);margin-top:1px;}
+.biz-desc{font-size:11px;color:var(--t2);margin-top:3px;line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+.biz-badge{display:inline-block;font-size:8px;background:#fff3cd;color:#856404;padding:1px 5px;border-radius:2px;font-weight:600;margin-top:3px;}
+.biz-arrow{color:var(--t3);flex-shrink:0;margin-top:2px;}
+.biz-shim{background:#fff;border-radius:var(--r);margin-bottom:8px;padding:10px;display:flex;gap:10px;align-items:flex-start;}
+
+.section-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--t3);padding:12px 12px 6px;}
+.empty{text-align:center;padding:32px 16px;color:var(--t3);font-size:12px;}
+
+/* BOTTOM NAV */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e8e8e8;display:flex;z-index:200;padding-bottom:env(safe-area-inset-bottom,0);}
+.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px 6px;cursor:pointer;border:none;background:none;font-family:inherit;color:var(--t3);font-size:9px;gap:3px;}
+.bnav-item.active{color:var(--g);}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+
+<div class="topbar">
+  <div class="topbar-title">Businesses</div>
+  <div class="topbar-sub" id="topbar-sub">Loading...</div>
+</div>
+
+<div class="cta-strip">
+  <a class="cta-register" href="partner.html">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+    Register Business
+  </a>
+  <a class="cta-login" href="partner.html?login=1">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+    Business Login
+  </a>
+</div>
+
+<div class="frow" id="cat-chips">
+  <button class="chip on" onclick="setFilter(null,this)">All</button>
+</div>
+
+<div class="section-lbl" id="biz-lbl">All Businesses</div>
+<div class="biz-list" id="biz-list">
+  <!-- shimmer -->
+  <div class="biz-shim"><div class="biz-dp shim" style="width:52px;height:52px;border-radius:50%;"></div><div style="flex:1;"><div class="shim" style="height:12px;border-radius:3px;margin-bottom:5px;width:70%;"></div><div class="shim" style="height:9px;border-radius:3px;margin-bottom:5px;width:40%;"></div><div class="shim" style="height:9px;border-radius:3px;width:80%;"></div></div></div>
+  <div class="biz-shim"><div class="biz-dp shim" style="width:52px;height:52px;border-radius:50%;"></div><div style="flex:1;"><div class="shim" style="height:12px;border-radius:3px;margin-bottom:5px;width:70%;"></div><div class="shim" style="height:9px;border-radius:3px;margin-bottom:5px;width:40%;"></div><div class="shim" style="height:9px;border-radius:3px;width:80%;"></div></div></div>
+  <div class="biz-shim"><div class="biz-dp shim" style="width:52px;height:52px;border-radius:50%;"></div><div style="flex:1;"><div class="shim" style="height:12px;border-radius:3px;margin-bottom:5px;width:70%;"></div><div class="shim" style="height:9px;border-radius:3px;margin-bottom:5px;width:40%;"></div><div class="shim" style="height:9px;border-radius:3px;width:80%;"></div></div></div>
+</div>
+
+<nav class="bottom-nav">
+  <button class="bnav-item" onclick="window.location.href='home.html'">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+    Home
+  </button>
+  <button class="bnav-item" onclick="window.location.href='search.html'">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    Search
+  </button>
+  <button class="bnav-item active" onclick="window.location.href='businesses.html'">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" fill="none" stroke="currentColor" stroke-width="2.5"/></svg>
+    Businesses
+  </button>
+</nav>
+
+<script>
+const SU='https://khbotkadtbkwqxjxlyhm.supabase.co';
+const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtoYm90a2FkdGJrd3F4anhseWhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5NTU4OTAsImV4cCI6MjA4ODUzMTg5MH0.MnNTuoONyBTGZeO1qYyRUTtkRdFreK0OrOcYk66pWxs';
+const {createClient}=supabase;const sb=createClient(SU,SK);
+let area=null,allBiz=[],filterCat=null;
+
+function getArea(){try{return JSON.parse(localStorage.getItem('mp_area'));}catch{return null;}}
+function openProf(bizId){localStorage.setItem('mp_view_biz',bizId);localStorage.setItem('mp_prof_back','businesses.html');window.location.href='profile.html';}
+
+async function init(){
+  area=getArea();
+  if(!area){window.location.href='index.html';return;}
+  document.getElementById('topbar-sub').textContent='Businesses in '+area.name;
+  await Promise.all([loadCategories(),loadBusinesses()]);
+}
+
+async function loadCategories(){
+  const {data}=await sb.from('categories').select('*').order('name');
+  if(!data||!data.length)return;
+  const row=document.getElementById('cat-chips');
+  data.forEach(c=>{
+    const btn=document.createElement('button');
+    btn.className='chip';btn.textContent=c.name;
+    btn.onclick=()=>setFilter(c.id,btn);
+    row.appendChild(btn);
+  });
+}
+
+async function loadBusinesses(){
+  let q=sb.from('businesses').select('id,business_name,dp_url,description,is_premium,categories(id,name)').eq('area_id',area.id).eq('is_approved',true).eq('is_active',true).order('is_premium',{ascending:false}).order('hearts',{ascending:false});
+  if(filterCat)q=q.eq('category_id',filterCat);
+  const {data}=await q;
+  allBiz=data||[];
+  renderBiz(allBiz);
+}
+
+function setFilter(catId,btn){
+  filterCat=catId;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('biz-lbl').textContent=catId?btn.textContent+' Businesses':'All Businesses';
+  loadBusinesses();
+}
+
+function renderBiz(bizs){
+  const list=document.getElementById('biz-list');
+  list.innerHTML='';
+  if(!bizs||!bizs.length){list.innerHTML='<div class="empty">No businesses found in this category.</div>';return;}
+  bizs.forEach(b=>{
+    const card=document.createElement('div');
+    card.className='biz-card';
+    card.innerHTML=`
+      <div class="biz-dp">${b.dp_url?`<img src="${b.dp_url}" loading="lazy"/>`:`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>`}</div>
+      <div class="biz-info">
+        <div class="biz-name">${b.business_name}</div>
+        <div class="biz-cat">${b.categories?.name||''}</div>
+        ${b.description?`<div class="biz-desc">${b.description}</div>`:''}
+        ${b.is_premium?'<span class="biz-badge">Premium</span>':''}
+      </div>
+      <svg class="biz-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>`;
+    card.onclick=()=>openProf(b.id);
+    list.appendChild(card);
+  });
+}
+
+init();
+</script>
+</body>
+</html>

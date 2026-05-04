@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>Manager – MyPahad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--g:#1a5c3a;--gl:#e8f5ee;--bg:#f0f0ee;--s:#fff;--t:#111;--t2:#4a4a4a;--t3:#888;--bd:#ddd;--r:5px;--rs:3px;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html{font-size:13px;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-height:100vh;}
+button{cursor:pointer;font-family:inherit;}
+input,select,textarea{font-family:inherit;font-size:12px;width:100%;padding:7px 9px;border:1px solid var(--bd);border-radius:var(--rs);background:#fff;outline:none;}
+input:focus,select:focus,textarea:focus{border-color:var(--g);}
+label{display:block;font-size:11px;font-weight:600;color:var(--t2);margin-bottom:3px;}
+.hidden{display:none!important;}
+.fg{margin-bottom:9px;}
+.err{color:#c00;font-size:11px;margin-top:3px;}
+body::before{content:'';position:fixed;top:-50px;right:-50px;width:170px;height:170px;background:var(--g);border-radius:30px;opacity:0.06;z-index:0;pointer-events:none;}
+.shim{background:linear-gradient(90deg,#eee 25%,#e2e2e2 50%,#eee 75%);background-size:200% 100%;animation:sh 1.2s infinite;}
+@keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
+#toast{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:6px 14px;border-radius:14px;z-index:9999;font-size:11px;display:none;white-space:nowrap;}
+
+.nav{background:var(--g);display:flex;align-items:center;gap:7px;padding:6px 10px;position:sticky;top:0;z-index:100;}
+.nav-logo{height:22px;width:auto;}
+.nav-lbl{font-size:10px;color:rgba(255,255,255,0.6);font-weight:400;}
+.nav-menu{margin-left:auto;position:relative;}
+.nav-dots{background:rgba(255,255,255,0.12);border:none;color:rgba(255,255,255,0.7);padding:4px 7px;border-radius:var(--rs);font-size:14px;line-height:1;}
+.nav-dd{position:absolute;top:calc(100% + 4px);right:0;background:#fff;border:1px solid var(--bd);border-radius:var(--rs);min-width:100px;z-index:200;display:none;box-shadow:0 2px 8px rgba(0,0,0,0.1);}
+.nav-dd.open{display:block;}
+.nav-dd button{display:block;width:100%;text-align:left;padding:8px 12px;font-size:12px;background:none;border:none;color:var(--t);border-bottom:1px solid var(--bd);}
+.nav-dd button:last-child{border-bottom:none;color:#c00;}
+
+.auth-hero{background:var(--g);padding:16px 12px 12px;text-align:center;}
+.auth-hero img{height:28px;width:auto;margin-bottom:6px;}
+.auth-hero p{color:rgba(255,255,255,0.65);font-size:10px;}
+.auth-card{background:#fff;padding:14px;max-width:360px;margin:0 auto;}
+.btn-pri{background:var(--g);color:#fff;border:none;padding:9px;border-radius:var(--rs);font-size:12px;font-weight:600;width:100%;}
+.btn-sm{background:#fff;border:1px solid var(--bd);padding:4px 9px;border-radius:var(--rs);font-size:11px;color:var(--t);}
+.btn-appr{background:var(--gl);color:var(--g);border:1px solid var(--g);padding:4px 8px;border-radius:var(--rs);font-size:11px;font-weight:600;}
+.btn-dng{background:#fde;color:#c00;border:none;padding:4px 8px;border-radius:var(--rs);font-size:11px;}
+.btn-ena{background:#e8f5ee;color:var(--g);border:1px solid var(--g);padding:4px 8px;border-radius:var(--rs);font-size:11px;}
+.btn-prem{background:#cce5ff;color:#004085;border:none;padding:4px 8px;border-radius:var(--rs);font-size:11px;font-weight:600;}
+.btn-add{background:var(--gl);color:var(--g);border:none;padding:5px 10px;border-radius:var(--rs);font-size:11px;font-weight:600;}
+
+.dash{position:relative;z-index:1;}
+.bnav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--bd);display:flex;z-index:100;}
+.bni{flex:1;display:flex;flex-direction:column;align-items:center;padding:5px 2px;cursor:pointer;color:var(--t3);font-size:9px;gap:2px;}
+.bni.on{color:var(--g);}
+.dc{padding:10px;padding-bottom:68px;}
+
+.badge{display:inline-flex;align-items:center;padding:2px 5px;border-radius:2px;font-size:10px;font-weight:600;}
+.bg{background:#d4edda;color:#155724;}
+.by{background:#fff3cd;color:#856404;}
+.br{background:#f8d7da;color:#721c24;}
+.bb{background:#cce5ff;color:#004085;}
+
+.sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:8px;}
+.sgrid4{grid-template-columns:repeat(4,1fr);}
+.sbox{background:#fff;border:1px solid var(--bd);border-radius:var(--r);padding:7px 5px;text-align:center;}
+.snum{font-size:16px;font-weight:700;color:var(--g);}
+.slbl{font-size:9px;color:var(--t3);margin-top:1px;}
+
+.chart-wrap{background:#fff;border:1px solid var(--bd);border-radius:var(--r);padding:10px;margin-bottom:8px;}
+.chart-title{font-size:11px;font-weight:600;color:var(--t2);margin-bottom:8px;}
+.chart-canvas{width:100%!important;height:120px!important;}
+
+.slbl2{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--t3);margin-bottom:6px;}
+
+/* BIZ CARD */
+.bcard{background:#fff;border:1px solid var(--bd);border-radius:var(--r);padding:9px;margin-bottom:5px;}
+.bct{display:flex;align-items:flex-start;gap:7px;margin-bottom:7px;}
+.bdp{width:36px;height:36px;border-radius:50%;background:var(--gl);flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.bdp img{width:36px;height:36px;border-radius:50%;object-fit:cover;}
+.bnm{font-size:12px;font-weight:600;line-height:1.3;}
+.bmeta{font-size:10px;color:var(--t3);margin-top:1px;}
+.bbadges{display:flex;gap:3px;flex-wrap:wrap;margin-top:3px;}
+.bact{display:flex;gap:3px;flex-wrap:wrap;}
+
+/* ADS */
+.adcard{background:#fff;border:1px solid var(--bd);border-radius:var(--r);padding:9px;margin-bottom:5px;display:flex;gap:7px;}
+.adthumb{width:52px;height:36px;border-radius:var(--rs);object-fit:cover;background:var(--bg);flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.adthumb img{width:52px;height:36px;border-radius:var(--rs);object-fit:cover;}
+.adinfo{flex:1;min-width:0;}
+.adtype{font-size:9px;font-weight:600;text-transform:uppercase;color:var(--t3);}
+.adnm{font-size:12px;font-weight:500;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.addts{font-size:10px;color:var(--t3);margin-top:2px;}
+
+/* AREAS */
+.arow{background:#fff;border:1px solid var(--bd);border-radius:var(--r);padding:8px 9px;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;}
+.anm{font-size:12px;font-weight:500;}
+.ast{font-size:10px;color:var(--t3);}
+.aact{display:flex;gap:4px;}
+
+/* PREMIUM ROW */
+.prow{background:#fff;border:1px solid var(--bd);border-radius:var(--r);padding:7px 9px;margin-bottom:4px;display:flex;align-items:center;gap:6px;}
+.pnm{font-size:12px;font-weight:500;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.pexp{font-size:10px;color:var(--t3);}
+
+/* CATEGORY ROW */
+.crow{background:#fff;border:1px solid var(--bd);border-radius:var(--r);padding:7px 9px;margin-bottom:4px;display:flex;align-items:center;gap:6px;}
+.cnm{font-size:12px;font-weight:500;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.ccnt{font-size:10px;color:var(--t3);white-space:nowrap;}
+.cact{display:flex;gap:3px;flex-shrink:0;}
+.btn-mrg{background:#fff3e0;color:#e65100;border:none;padding:3px 8px;border-radius:var(--rs);font-size:10px;font-weight:600;}
+.btn-edt{background:var(--gl);color:var(--g);border:none;padding:3px 8px;border-radius:var(--rs);font-size:10px;font-weight:600;}
+
+/* merge target dropdown */
+.merge-select{font-size:11px;padding:5px 7px;width:100%;margin-top:6px;}
+.warn-box{background:#fff3cd;border:1px solid #ffc107;border-radius:var(--rs);padding:8px 10px;font-size:11px;color:#7a5200;margin-top:6px;line-height:1.5;}
+
+/* FILTER */
+.fbar{display:flex;gap:5px;margin-bottom:7px;flex-wrap:wrap;}
+.fbar select{width:auto;flex:1;min-width:90px;font-size:11px;padding:5px 7px;}
+
+/* PAGINATION */
+.pgrow{display:flex;align-items:center;justify-content:center;gap:7px;padding:6px 0 2px;}
+.pgb{background:#fff;border:1px solid var(--bd);padding:4px 12px;border-radius:var(--rs);font-size:11px;color:var(--t2);}
+.pgb:disabled{opacity:0.35;}
+.pgi{font-size:10px;color:var(--t3);}
+
+/* MODAL */
+.mo{position:fixed;inset:0;background:rgba(0,0,0,0.42);z-index:200;overflow-y:auto;}
+.mbox{background:#fff;max-width:460px;margin:28px auto 20px;border-radius:var(--r);padding:14px;position:relative;}
+.mtitle{font-size:14px;font-weight:600;margin-bottom:10px;padding-right:22px;}
+.mclose{position:absolute;top:8px;right:10px;background:none;border:none;font-size:18px;color:var(--t3);}
+.mftr{display:flex;gap:6px;margin-top:10px;}
+.bs-res{border:1px solid var(--bd);max-height:110px;overflow-y:auto;border-radius:var(--rs);margin-top:2px;background:#fff;display:none;}
+.bs-item{padding:7px 9px;font-size:12px;cursor:pointer;border-bottom:1px solid var(--bd);}
+.bs-item:last-child{border-bottom:none;}
+.img-prev{width:56px;height:38px;border-radius:var(--rs);object-fit:cover;display:none;margin-top:5px;}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+
+<!-- LOGIN -->
+<div id="page-login">
+  <div class="auth-hero"><img src="logo.png" alt="MyPahad"/><p>Manager Portal</p></div>
+  <div style="padding:0 12px 14px;max-width:360px;margin:0 auto;">
+    <div class="auth-card" style="border-radius:0 0 var(--r) var(--r);">
+      <div class="fg" style="margin-top:2px;"><label>Email</label><input type="email" id="me"/></div>
+      <div class="fg"><label>Password</label><input type="password" id="mp"/></div>
+      <div id="merr" class="err"></div>
+      <button class="btn-pri" onclick="doLogin()">Login as Manager</button>
+    </div>
+    <div style="text-align:center;margin-top:10px;"><a href="index.html" style="font-size:11px;color:var(--t3);">← Back to MyPahad</a></div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="page-dash" class="hidden dash">
+  <div class="nav">
+    <img src="logo.png" class="nav-logo" alt="MyPahad"/>
+    <span class="nav-lbl">Manager</span>
+    <div class="nav-menu">
+      <button class="nav-dots" onclick="toggleMenu()">···</button>
+      <div class="nav-dd" id="navdd">
+        <button onclick="window.location='index.html'">View site</button>
+        <button onclick="doLogout()">Logout</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="dc" id="tc-ov"></div>
+  <div class="dc hidden" id="tc-biz"></div>
+  <div class="dc hidden" id="tc-ads"></div>
+  <div class="dc hidden" id="tc-cfg"></div>
+
+  <div class="bnav">
+    <div class="bni on" id="bn-ov" onclick="dTab('ov')">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Overview
+    </div>
+    <div class="bni" id="bn-biz" onclick="dTab('biz')">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Businesses
+    </div>
+    <div class="bni" id="bn-ads" onclick="dTab('ads')">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="4" rx="1"/><rect x="3" y="10" width="11" height="11" rx="1"/><rect x="17" y="10" width="4" height="11" rx="1"/></svg>Ads
+    </div>
+    <div class="bni" id="bn-cfg" onclick="dTab('cfg')">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>Settings
+    </div>
+  </div>
+</div>
+
+<!-- CATEGORY EDIT MODAL -->
+<div id="catmod" class="mo hidden">
+  <div class="mbox">
+    <button class="mclose" onclick="closeMod('catmod')">×</button>
+    <div class="mtitle" id="catmod-title">Edit Category</div>
+    <input type="hidden" id="cat-id"/>
+    <div class="fg">
+      <label>Category Name *</label>
+      <input type="text" id="cat-name" placeholder="e.g. Dairy Products"/>
+    </div>
+    <div id="catmod-warn" class="warn-box hidden"></div>
+    <div id="cat-err" class="err"></div>
+    <div class="mftr">
+      <button class="btn-pri" onclick="saveCatEdit()">Save Name</button>
+      <button class="btn-sm" onclick="closeMod('catmod')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- CATEGORY MERGE MODAL -->
+<div id="mergemod" class="mo hidden">
+  <div class="mbox">
+    <button class="mclose" onclick="closeMod('mergemod')">×</button>
+    <div class="mtitle">Merge Category</div>
+    <input type="hidden" id="merge-from-id"/>
+    <p style="font-size:12px;color:var(--t2);margin-bottom:8px;">
+      Moving all listings from <strong id="merge-from-name"></strong> into another category, then deleting the old one.
+    </p>
+    <div class="warn-box" style="margin-bottom:8px;">
+      <strong>⚠ This cannot be undone.</strong> All listings tagged with the old category will be reassigned to the category you choose below.
+    </div>
+    <div class="fg">
+      <label>Merge into →</label>
+      <select id="merge-into-id" class="merge-select"></select>
+    </div>
+    <div id="merge-err" class="err"></div>
+    <div class="mftr">
+      <button class="btn-pri" style="background:#e05a2b;" onclick="doMerge()">Merge &amp; Delete Old</button>
+      <button class="btn-sm" onclick="closeMod('mergemod')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD AD MODAL -->
+<div id="admod" class="mo hidden">
+  <div class="mbox">
+    <button class="mclose" onclick="closeMod('admod')">×</button>
+    <div class="mtitle">Add Ad / Sponsored Slot</div>
+    <div class="fg"><label>Type</label><select id="atype"><option value="banner">Banner Ad (16:9)</option><option value="sponsored_product">Sponsored Product</option><option value="sponsored_service">Sponsored Service</option></select></div>
+    <div class="fg">
+      <label>Business</label>
+      <input type="text" id="absrch" placeholder="Search business..." oninput="srchBiz(this.value)"/>
+      <div id="abres" class="bs-res"></div>
+      <input type="hidden" id="abid"/>
+      <small id="absel" style="font-size:10px;color:var(--g);"></small>
+    </div>
+    <div class="fg"><label>Area</label><select id="aarea"></select></div>
+    <div class="fg"><label>Title</label><input type="text" id="atitle" placeholder="Summer Sale!"/></div>
+    <div class="fg"><label>Start</label><input type="datetime-local" id="astart"/></div>
+    <div class="fg"><label>End</label><input type="datetime-local" id="aend"/></div>
+    <div class="fg"><label>Image</label><input type="file" id="aimg" accept="image/*" onchange="prvImg(this,'aimgp')"/><img id="aimgp" class="img-prev"/></div>
+    <div id="aerr" class="err"></div>
+    <div class="mftr"><button class="btn-pri" onclick="saveAd()">Save</button><button class="btn-sm" onclick="closeMod('admod')">Cancel</button></div>
+  </div>
+</div>
+
+<script>
+const SU='https://khbotkadtbkwqxjxlyhm.supabase.co';
+const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtoYm90a2FkdGJrd3F4anhseWhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5NTU4OTAsImV4cCI6MjA4ODUzMTg5MH0.MnNTuoONyBTGZeO1qYyRUTtkRdFreK0OrOcYk66pWxs';
+const MGRS=['admin@mypahad.in','manager@mypahad.in'];
+const {createClient}=supabase;const sb=createClient(SU,SK);
+let cu=null,areas=[],charts={};
+const PS=10;
+
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',2200);}
+function openMod(id){document.getElementById(id).classList.remove('hidden');}
+function closeMod(id){document.getElementById(id).classList.add('hidden');}
+function toggleMenu(){document.getElementById('navdd').classList.toggle('open');}
+document.addEventListener('click',e=>{if(!e.target.closest('.nav-menu'))document.getElementById('navdd')?.classList.remove('open');});
+function prvImg(inp,pid){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{const p=document.getElementById(pid);p.src=e.target.result;p.style.display='block';};r.readAsDataURL(f);}
+
+async function doLogin(){
+  const e=document.getElementById('me').value.trim(),p=document.getElementById('mp').value;
+  const err=document.getElementById('merr');err.textContent='';
+  if(!MGRS.includes(e)){err.textContent='Not authorized as manager.';return;}
+  const {data,error}=await sb.auth.signInWithPassword({email:e,password:p});
+  if(error){err.textContent=error.message;return;}
+  cu=data.user;sessionStorage.setItem('mp_mgr','1');
+  document.getElementById('page-login').classList.add('hidden');
+  document.getElementById('page-dash').classList.remove('hidden');
+  await loadAreas();dTab('ov');
+}
+
+async function doLogout(){await sb.auth.signOut();sessionStorage.removeItem('mp_mgr');cu=null;document.getElementById('page-dash').classList.add('hidden');document.getElementById('page-login').classList.remove('hidden');}
+
+async function loadAreas(){
+  const {data}=await sb.from('areas').select('*').order('name');areas=data||[];
+  const as=document.getElementById('aarea');if(as){as.innerHTML='';areas.forEach(a=>as.appendChild(new Option(a.name,a.id)));}
+}
+
+function dTab(t){
+  ['ov','biz','ads','cfg'].forEach(x=>{
+    document.getElementById('tc-'+x).classList.toggle('hidden',x!==t);
+    document.getElementById('bn-'+x).classList.toggle('on',x===t);
+  });
+  if(t==='ov')renderOv();else if(t==='biz')renderBiz();else if(t==='ads')renderAds();else if(t==='cfg')renderCfg();
+}
+
+// ===== OVERVIEW =====
+async function renderOv(){
+  const c=document.getElementById('tc-ov');
+  c.innerHTML=`
+    <div class="fbar" style="margin-bottom:8px;">
+      <select id="afilter" onchange="renderOv()" style="font-size:11px;padding:5px 7px;">
+        <option value="">All Areas</option>
+        ${areas.map(a=>`<option value="${a.id}">${a.name}</option>`).join('')}
+      </select>
+    </div>
+    <div class="sgrid sgrid4" id="sgrid">${[...Array(4)].map(()=>`<div class="sbox"><div class="shim" style="height:16px;border-radius:2px;margin-bottom:3px;"></div><div class="shim" style="height:8px;width:60%;margin:0 auto;border-radius:2px;"></div></div>`).join('')}</div>
+    <div class="chart-wrap"><div class="chart-title">Visits – last 30 days</div><canvas id="vchart" class="chart-canvas"></canvas></div>
+    <div class="chart-wrap"><div class="chart-title">WhatsApp contacts – last 30 days</div><canvas id="wchart" class="chart-canvas"></canvas></div>
+    <div class="slbl2" style="margin-top:4px;">Top Businesses</div>
+    <div id="topbiz"></div>`;
+
+  const aid=document.getElementById('afilter')?.value||'';
+  const since=new Date(Date.now()-30*864e5).toISOString();
+
+  let bq=sb.from('businesses').select('id,is_approved,is_premium,is_active');
+  if(aid)bq=bq.eq('area_id',aid);
+  const {data:bd}=await bq;
+  const total=bd?.length||0,appr=(bd||[]).filter(b=>b.is_approved).length,pend=(bd||[]).filter(b=>!b.is_approved&&b.is_active).length,prem=(bd||[]).filter(b=>b.is_premium).length;
+
+  let eq=sb.from('analytics').select('event_type,created_at').gte('created_at',since);
+  if(aid)eq=eq.eq('area_id',aid);
+  const {data:ev}=await eq;
+  const visits=(ev||[]).filter(e=>e.event_type==='area_visit').length;
+  const wac=(ev||[]).filter(e=>e.event_type==='whatsapp_click').length;
+
+  document.getElementById('sgrid').innerHTML=`
+    <div class="sbox"><div class="snum">${visits}</div><div class="slbl">Visits</div></div>
+    <div class="sbox"><div class="snum">${wac}</div><div class="slbl">WA Contacts</div></div>
+    <div class="sbox"><div class="snum">${total}</div><div class="slbl">Businesses</div></div>
+    <div class="sbox"><div class="snum">${prem}</div><div class="slbl">Premium</div></div>`;
+
+  // Build 30 day series
+  const days={};for(let i=29;i>=0;i--){const d=new Date(Date.now()-i*864e5);days[d.toISOString().slice(0,10)]=0;}
+  const wdays={...days};
+  (ev||[]).forEach(e=>{const d=e.created_at.slice(0,10);if(e.event_type==='area_visit'&&days[d]!==undefined)days[d]++;if(e.event_type==='whatsapp_click'&&wdays[d]!==undefined)wdays[d]++;});
+  const labels=Object.keys(days).map(d=>d.slice(5));
+
+  if(charts.v)charts.v.destroy();if(charts.w)charts.w.destroy();
+  const mk=(id,vals,color)=>{const ctx=document.getElementById(id).getContext('2d');return new Chart(ctx,{type:'bar',data:{labels,datasets:[{data:vals,backgroundColor:color,borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:7},maxTicksLimit:10},grid:{display:false}},y:{ticks:{font:{size:8},stepSize:1},grid:{color:'#f0f0f0'}}}}});};
+  charts.v=mk('vchart',Object.values(days),'#1a5c3a');
+  charts.w=mk('wchart',Object.values(wdays),'#e05a2b');
+
+  let tq=sb.from('businesses').select('id,business_name,hearts,areas(name)').eq('is_approved',true).order('hearts',{ascending:false}).limit(10);
+  if(aid)tq=tq.eq('area_id',aid);
+  const {data:top}=await tq;
+  const tb=document.getElementById('topbiz');
+  if(!tb)return;tb.innerHTML='';
+  if(!top||!top.length){tb.innerHTML='<div style="font-size:12px;color:var(--t3);padding:8px 0;">No approved businesses yet.</div>';return;}
+  top.forEach((b,i)=>{const r=document.createElement('div');r.className='prow';r.innerHTML=`<div style="font-size:11px;color:var(--t3);width:14px;">${i+1}</div><div class="pnm">${b.business_name} <span style="font-size:9px;color:var(--t3);">${b.areas?.name||''}</span></div><div style="font-size:11px;color:#e74c3c;">♥ ${b.hearts||0}</div>`;tb.appendChild(r);});
+}
+
+// ===== BUSINESSES =====
+let bizPg=0;
+async function renderBiz(st='',pg=0){
+  bizPg=pg;const c=document.getElementById('tc-biz');
+  c.innerHTML=`
+    <div class="fbar">
+      <select id="stfilt" onchange="renderBiz(this.value,0)" style="font-size:11px;padding:5px 7px;">
+        <option value="" ${st===''?'selected':''}>All</option>
+        <option value="pending" ${st==='pending'?'selected':''}>Pending</option>
+        <option value="approved" ${st==='approved'?'selected':''}>Approved</option>
+        <option value="disabled" ${st==='disabled'?'selected':''}>Disabled</option>
+      </select>
+    </div>
+    <div id="bizlist">
+      ${[...Array(3)].map(()=>`<div class="bcard"><div class="bct"><div class="bdp shim"></div><div style="flex:1;"><div class="shim" style="height:12px;border-radius:2px;margin-bottom:4px;"></div><div class="shim" style="height:10px;width:60%;border-radius:2px;"></div></div></div></div>`).join('')}
+    </div>`;
+  let q=sb.from('businesses').select('*,areas(name),categories(name)',{count:'exact'}).order('created_at',{ascending:false}).range(pg*PS,(pg+1)*PS-1);
+  if(st==='pending')q=q.eq('is_approved',false).eq('is_active',true);
+  else if(st==='approved')q=q.eq('is_approved',true).eq('is_active',true);
+  else if(st==='disabled')q=q.eq('is_active',false);
+  const {data,count}=await q;const total=count||0;const tp=Math.ceil(total/PS);
+  const list=document.getElementById('bizlist');if(!list)return;list.innerHTML='';
+  if(!data||!data.length){list.innerHTML='<div style="font-size:12px;color:var(--t3);text-align:center;padding:18px;">No businesses found.</div>';return;}
+  data.forEach(b=>{
+    const card=document.createElement('div');card.className='bcard';
+    card.innerHTML=`
+      <div class="bct">
+        <div class="bdp">${b.dp_url?`<img src="${b.dp_url}" alt="${b.business_name}"/>`:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>`}</div>
+        <div style="flex:1;min-width:0;">
+          <div class="bnm">${b.business_name}${b.username?` <span style="font-size:9px;color:var(--t3);">@${b.username}</span>`:''}</div>
+          <div class="bmeta">${b.categories?.name||''} · ${b.areas?.name||''} · WA: ${b.whatsapp}</div>
+          <div class="bbadges">
+            ${b.is_approved?'<span class="badge bg">Approved</span>':'<span class="badge by">Pending</span>'}
+            ${!b.is_active?'<span class="badge br">Disabled</span>':''}
+            ${b.is_premium?'<span class="badge bb">Premium</span>':''}
+          </div>
+        </div>
+      </div>
+      <div class="bact">
+        ${!b.is_approved?`<button class="btn-appr" onclick="apprBiz('${b.id}','${st}')">Approve</button>`:''}
+        ${b.is_active?`<button class="btn-dng" onclick="disBiz('${b.id}','${st}')">Disable</button>`:`<button class="btn-ena" onclick="enBiz('${b.id}','${st}')">Enable</button>`}
+        ${!b.is_premium?`<button class="btn-prem" onclick="enPrem('${b.id}','${st}')">+ Premium</button>`:`<button class="btn-dng" onclick="revPrem('${b.id}','${st}')">Revoke Prem</button>`}
+        <button class="btn-sm" onclick="renBiz('${b.id}','${b.business_name.replace(/'/g,"\\'")}','${st}')">Rename</button>
+        <button class="btn-dng" onclick="delBiz('${b.id}','${st}')">Delete</button>
+      </div>`;
+    list.appendChild(card);
+  });
+  if(tp>1){const pgr=document.createElement('div');pgr.className='pgrow';pgr.innerHTML=`<button class="pgb" onclick="renderBiz('${st}',${pg-1})" ${pg===0?'disabled':''}>← Prev</button><span class="pgi">${pg+1} / ${tp}</span><button class="pgb" onclick="renderBiz('${st}',${pg+1})" ${pg>=tp-1?'disabled':''}>Next →</button>`;list.appendChild(pgr);}
+}
+
+async function apprBiz(id,st){const {error}=await sb.from('businesses').update({is_approved:true}).eq('id',id);if(error){toast('Error: '+error.message);return;}toast('Approved!');renderBiz(st,bizPg);}
+async function disBiz(id,st){if(!confirm('Disable?'))return;const {error}=await sb.from('businesses').update({is_active:false}).eq('id',id);if(error){toast('Error: '+error.message);return;}toast('Disabled');renderBiz(st,bizPg);}
+async function enBiz(id,st){const {error}=await sb.from('businesses').update({is_active:true}).eq('id',id);if(error){toast('Error: '+error.message);return;}toast('Enabled');renderBiz(st,bizPg);}
+async function delBiz(id,st){if(!confirm('Delete this business and all its listings?'))return;await sb.from('listings').delete().eq('business_id',id);await sb.from('business_photos').delete().eq('business_id',id);const {error}=await sb.from('businesses').delete().eq('id',id);if(error){toast('Error: '+error.message);return;}toast('Deleted');renderBiz(st,bizPg);}
+async function renBiz(id,cur,st){const n=prompt('Business Name:',cur);if(!n||n===cur)return;const {error}=await sb.from('businesses').update({business_name:n}).eq('id',id);if(error){toast('Error: '+error.message);return;}toast('Updated');renderBiz(st,bizPg);}
+async function enPrem(id,st){const exp=new Date();exp.setFullYear(exp.getFullYear()+1);const {error}=await sb.from('businesses').update({is_premium:true,premium_expires_at:exp.toISOString()}).eq('id',id);if(error){toast('Error: '+error.message);return;}toast('Premium enabled');renderBiz(st,bizPg);}
+async function revPrem(id,st){if(!confirm('Revoke premium?'))return;const {error}=await sb.from('businesses').update({is_premium:false,premium_expires_at:null}).eq('id',id);if(error){toast('Error: '+error.message);return;}toast('Revoked');renderBiz(st,bizPg);}
+
+// ===== ADS =====
+let adPg=0;
+async function renderAds(pg=0){
+  adPg=pg;const c=document.getElementById('tc-ads');
+  c.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <div class="slbl2">Ads &amp; Sponsored</div>
+      <button class="btn-add" onclick="openAdMod()">+ Add</button>
+    </div>
+    <div id="adslist">
+      <div class="shim" style="height:54px;border-radius:var(--r);margin-bottom:5px;"></div>
+    </div>`;
+  const {data,count}=await sb.from('ads').select('*,businesses(business_name),areas(name)',{count:'exact'}).order('created_at',{ascending:false}).range(pg*PS,(pg+1)*PS-1);
+  const list=document.getElementById('adslist');if(!list)return;list.innerHTML='';
+  const total=count||0;const tp=Math.ceil(total/PS);
+  if(!data||!data.length){list.innerHTML='<div style="font-size:12px;color:var(--t3);text-align:center;padding:18px;">No ads yet.</div>';return;}
+  data.forEach(a=>{
+    const card=document.createElement('div');card.className='adcard';
+    card.innerHTML=`${a.image_url?`<div class="adthumb"><img src="${a.image_url}" alt="ad"/></div>`:`<div class="adthumb"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>`}
+      <div class="adinfo"><div class="adtype">${a.ad_type}</div><div class="adnm">${a.title||a.businesses?.business_name||'—'}</div><div class="addts">${a.areas?.name||''} · ${a.starts_at?new Date(a.starts_at).toLocaleDateString():'?'} → ${a.ends_at?new Date(a.ends_at).toLocaleDateString():'?'}</div><div style="margin-top:4px;display:flex;gap:4px;">${a.is_active?'<span class="badge bg">Active</span>':'<span class="badge br">Inactive</span>'}<button class="btn-dng" onclick="delAd('${a.id}')">Delete</button></div></div>`;
+    list.appendChild(card);
+  });
+  if(tp>1){const pgr=document.createElement('div');pgr.className='pgrow';pgr.innerHTML=`<button class="pgb" onclick="renderAds(${pg-1})" ${pg===0?'disabled':''}>← Prev</button><span class="pgi">${pg+1} / ${tp}</span><button class="pgb" onclick="renderAds(${pg+1})" ${pg>=tp-1?'disabled':''}>Next →</button>`;list.appendChild(pgr);}
+}
+
+function openAdMod(){
+  document.getElementById('aerr').textContent='';document.getElementById('absrch').value='';document.getElementById('abid').value='';document.getElementById('absel').textContent='';document.getElementById('aimgp').style.display='none';
+  document.getElementById('abres').style.display='none';openMod('admod');
+}
+async function srchBiz(v){
+  const res=document.getElementById('abres');if(!v||v.length<2){res.style.display='none';return;}
+  const {data}=await sb.from('businesses').select('id,business_name').ilike('business_name','%'+v+'%').limit(8);
+  res.innerHTML='';if(!data||!data.length){res.style.display='none';return;}
+  res.style.display='block';
+  data.forEach(b=>{const d=document.createElement('div');d.className='bs-item';d.textContent=b.business_name;d.onclick=()=>{document.getElementById('abid').value=b.id;document.getElementById('absel').textContent='Selected: '+b.business_name;document.getElementById('absrch').value=b.business_name;res.style.display='none';};res.appendChild(d);});
+}
+async function saveAd(){
+  const areaId=document.getElementById('aarea').value,start=document.getElementById('astart').value,end=document.getElementById('aend').value,err=document.getElementById('aerr');
+  err.textContent='';if(!areaId||!start||!end){err.textContent='Area, start and end required.';return;}
+  let imgUrl=null;const imgFile=document.getElementById('aimg').files[0];
+  if(imgFile){const r=new FileReader();await new Promise(res=>{r.onload=e=>{imgUrl=e.target.result;res();};r.readAsDataURL(imgFile);});}
+  const {error}=await sb.from('ads').insert({business_id:document.getElementById('abid').value||null,area_id:areaId,title:document.getElementById('atitle').value.trim()||null,ad_type:document.getElementById('atype').value,starts_at:new Date(start).toISOString(),ends_at:new Date(end).toISOString(),image_url:imgUrl,is_active:true});
+  if(error){err.textContent='Error: '+error.message+(error.code==='42501'?' — Run SQL fix.':'');return;}
+  toast('Ad saved!');closeMod('admod');renderAds(adPg);
+}
+async function delAd(id){if(!confirm('Delete ad?'))return;await sb.from('ads').delete().eq('id',id);toast('Deleted');renderAds(adPg);}
+
+// ===== SETTINGS (Areas + Premium + Categories) =====
+let areaPg=0,premPg=0,catPg=0;
+async function renderCfg(aPg=0,pPg=0,cPg=0){
+  areaPg=aPg;premPg=pPg;catPg=cPg;
+  const c=document.getElementById('tc-cfg');
+  c.innerHTML=`
+    <div class="slbl2">Add New City / Area</div>
+    <div style="display:flex;gap:5px;margin-bottom:10px;">
+      <input type="text" id="naname" placeholder="Area name" style="flex:1;"/>
+      <button class="btn-add" onclick="addArea()">Add</button>
+    </div>
+    <div class="slbl2">Areas</div>
+    <div id="areaslist"></div>
+
+    <div class="slbl2" style="margin-top:12px;">Categories
+      <span style="font-size:10px;font-weight:400;color:var(--t3);margin-left:6px;text-transform:none;letter-spacing:0;">Partners can create new ones while adding listings</span>
+    </div>
+    <div id="catslist"></div>
+
+    <div class="slbl2" style="margin-top:12px;">Premium Subscriptions</div>
+    <div id="premlist"></div>`;
+
+  // ---- Areas ----
+  const {data:ad,count:ac}=await sb.from('areas').select('*',{count:'exact'}).order('name').range(aPg*PS,(aPg+1)*PS-1);
+  const atp=Math.ceil((ac||0)/PS);
+  const al=document.getElementById('areaslist');if(al){
+    al.innerHTML='';
+    (ad||[]).forEach(a=>{
+      const r=document.createElement('div');r.className='arow';
+      r.innerHTML=`<div><div class="anm">${a.name}</div><div class="ast">${a.is_active?'Active':'Inactive'} · ${a.slug}</div></div><div class="aact"><button class="btn-sm" onclick="togArea('${a.id}',${a.is_active})">${a.is_active?'Deactivate':'Activate'}</button><button class="btn-dng" onclick="delArea('${a.id}','${a.name.replace(/'/g,"\\'")}')">Delete</button></div>`;
+      al.appendChild(r);
+    });
+    if(atp>1){const pgr=document.createElement('div');pgr.className='pgrow';pgr.innerHTML=`<button class="pgb" onclick="renderCfg(${aPg-1},${pPg},${cPg})" ${aPg===0?'disabled':''}>← Prev</button><span class="pgi">${aPg+1} / ${atp}</span><button class="pgb" onclick="renderCfg(${aPg+1},${pPg},${cPg})" ${aPg>=atp-1?'disabled':''}>Next →</button>`;al.appendChild(pgr);}
+  }
+
+  // ---- Categories ----
+  // Fetch categories with listing count
+  const {data:cats,count:cc}=await sb.from('categories').select('*',{count:'exact'}).order('name').range(cPg*PS,(cPg+1)*PS-1);
+  // Get counts per category in one shot
+  const {data:lstCounts}=await sb.from('listings').select('category_id');
+  const cntMap={};(lstCounts||[]).forEach(l=>{if(l.category_id)cntMap[l.category_id]=(cntMap[l.category_id]||0)+1;});
+
+  const ctp=Math.ceil((cc||0)/PS);
+  const cl=document.getElementById('catslist');if(cl){
+    cl.innerHTML='';
+    if(!cats||!cats.length){cl.innerHTML='<div style="font-size:11px;color:var(--t3);padding:8px 0;">No categories yet.</div>';}
+    (cats||[]).forEach(cat=>{
+      const count=cntMap[cat.id]||0;
+      const r=document.createElement('div');r.className='crow';
+      r.innerHTML=`
+        <div class="cnm">${cat.name}</div>
+        <div class="ccnt">${count} listing${count!==1?'s':''}</div>
+        <div class="cact">
+          <button class="btn-edt" onclick="openCatEdit('${cat.id}','${cat.name.replace(/'/g,"\\'")}',${count})">Rename</button>
+          <button class="btn-mrg" onclick="openMerge('${cat.id}','${cat.name.replace(/'/g,"\\'")}')">Merge</button>
+          ${count===0?`<button class="btn-dng" onclick="delCat('${cat.id}','${cat.name.replace(/'/g,"\\'")}')">Del</button>`:`<button class="btn-sm" disabled title="${count} listings use this" style="opacity:0.4;cursor:not-allowed;">Del</button>`}
+        </div>`;
+      cl.appendChild(r);
+    });
+    if(ctp>1){const pgr=document.createElement('div');pgr.className='pgrow';pgr.innerHTML=`<button class="pgb" onclick="renderCfg(${aPg},${pPg},${cPg-1})" ${cPg===0?'disabled':''}>← Prev</button><span class="pgi">${cPg+1} / ${ctp}</span><button class="pgb" onclick="renderCfg(${aPg},${pPg},${cPg+1})" ${cPg>=ctp-1?'disabled':''}>Next →</button>`;cl.appendChild(pgr);}
+  }
+
+  // ---- Premium ----
+  const {data:pd,count:pc}=await sb.from('businesses').select('id,business_name,is_premium,premium_expires_at,areas(name)',{count:'exact'}).order('business_name').range(pPg*PS,(pPg+1)*PS-1);
+  const ptp=Math.ceil((pc||0)/PS);
+  const pl=document.getElementById('premlist');if(pl){
+    pl.innerHTML='';
+    (pd||[]).forEach(b=>{
+      const r=document.createElement('div');r.className='prow';
+      const exp=b.premium_expires_at?new Date(b.premium_expires_at).toLocaleDateString():'';
+      r.innerHTML=`<div class="pnm">${b.business_name} <span style="font-size:9px;color:var(--t3);">${b.areas?.name||''}</span></div>${b.is_premium?`<span class="badge bb">Premium</span><span class="pexp">${exp}</span><button class="btn-dng" onclick="revPrem2('${b.id}')">Revoke</button>`:`<button class="btn-prem" onclick="enPrem2('${b.id}')">Enable</button>`}`;
+      pl.appendChild(r);
+    });
+    if(ptp>1){const pgr=document.createElement('div');pgr.className='pgrow';pgr.innerHTML=`<button class="pgb" onclick="renderCfg(${aPg},${pPg-1},${cPg})" ${pPg===0?'disabled':''}>← Prev</button><span class="pgi">${pPg+1} / ${ptp}</span><button class="pgb" onclick="renderCfg(${aPg},${pPg+1},${cPg})" ${pPg>=ptp-1?'disabled':''}>Next →</button>`;pl.appendChild(pgr);}
+  }
+}
+
+async function addArea(){
+  const name=document.getElementById('naname').value.trim();if(!name)return;
+  const slug=name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+  const {error}=await sb.from('areas').insert({name,slug,is_active:false});
+  if(error){toast('Error: '+error.message);return;}
+  toast('Area added (inactive)');document.getElementById('naname').value='';
+  await loadAreas();renderCfg(areaPg,premPg,catPg);
+}
+async function togArea(id,isA){await sb.from('areas').update({is_active:!isA}).eq('id',id);toast('Updated');await loadAreas();renderCfg(areaPg,premPg,catPg);}
+async function delArea(id,name){
+  if(!confirm(`Delete area "${name}"? This cannot be undone.`))return;
+  const {error}=await sb.from('areas').delete().eq('id',id);
+  if(error){toast('Error: '+error.message+' (may have linked businesses)');return;}
+  toast('Area deleted');await loadAreas();renderCfg(areaPg,premPg,catPg);
+}
+async function enPrem2(id){const exp=new Date();exp.setFullYear(exp.getFullYear()+1);await sb.from('businesses').update({is_premium:true,premium_expires_at:exp.toISOString()}).eq('id',id);toast('Premium enabled');renderCfg(areaPg,premPg,catPg);}
+async function revPrem2(id){if(!confirm('Revoke premium?'))return;await sb.from('businesses').update({is_premium:false,premium_expires_at:null}).eq('id',id);toast('Revoked');renderCfg(areaPg,premPg,catPg);}
+
+// ===== CATEGORY MANAGEMENT =====
+function openCatEdit(id,name,count){
+  document.getElementById('cat-id').value=id;
+  document.getElementById('cat-name').value=name;
+  document.getElementById('cat-err').textContent='';
+  const w=document.getElementById('catmod-warn');
+  if(count>0){w.classList.remove('hidden');w.textContent=`This category has ${count} listing${count!==1?'s':''} linked to it. Renaming will update the name everywhere immediately.`;}
+  else{w.classList.add('hidden');}
+  document.getElementById('catmod-title').textContent='Rename Category';
+  openMod('catmod');
+}
+
+async function saveCatEdit(){
+  const id=document.getElementById('cat-id').value;
+  const name=document.getElementById('cat-name').value.trim();
+  const err=document.getElementById('cat-err');
+  err.textContent='';
+  if(!name){err.textContent='Name cannot be empty.';return;}
+  // Check for duplicate name
+  const {data:dup}=await sb.from('categories').select('id').ilike('name',name).neq('id',id);
+  if(dup&&dup.length){err.textContent='A category with this name already exists.';return;}
+  const {error}=await sb.from('categories').update({name}).eq('id',id);
+  if(error){err.textContent='Error: '+error.message;return;}
+  toast('Category renamed!');closeMod('catmod');renderCfg(areaPg,premPg,catPg);
+}
+
+async function openMerge(fromId,fromName){
+  document.getElementById('merge-from-id').value=fromId;
+  document.getElementById('merge-from-name').textContent=fromName;
+  document.getElementById('merge-err').textContent='';
+  // Populate target dropdown with all OTHER categories
+  const {data:cats}=await sb.from('categories').select('id,name').neq('id',fromId).order('name');
+  const sel=document.getElementById('merge-into-id');
+  sel.innerHTML='<option value="">— select target —</option>';
+  (cats||[]).forEach(c=>sel.appendChild(new Option(c.name,c.id)));
+  openMod('mergemod');
+}
+
+async function doMerge(){
+  const fromId=document.getElementById('merge-from-id').value;
+  const intoId=document.getElementById('merge-into-id').value;
+  const err=document.getElementById('merge-err');
+  err.textContent='';
+  if(!intoId){err.textContent='Please select a target category.';return;}
+  // Step 1: Reassign all listings
+  const {error:e1}=await sb.from('listings').update({category_id:intoId}).eq('category_id',fromId);
+  if(e1){err.textContent='Failed reassigning listings: '+e1.message;return;}
+  // Step 2: Reassign any businesses using this category
+  await sb.from('businesses').update({category_id:intoId}).eq('category_id',fromId);
+  // Step 3: Delete old category
+  const {error:e2}=await sb.from('categories').delete().eq('id',fromId);
+  if(e2){err.textContent='Listings moved but category delete failed: '+e2.message;return;}
+  toast('Merged & deleted!');closeMod('mergemod');renderCfg(areaPg,premPg,catPg);
+}
+
+async function delCat(id,name){
+  // Double-check count is really zero before deleting
+  const {count}=await sb.from('listings').select('id',{count:'exact',head:true}).eq('category_id',id);
+  if(count>0){toast(`Cannot delete — ${count} listing(s) still use this category.`);return;}
+  if(!confirm(`Delete category "${name}"?`))return;
+  const {error}=await sb.from('categories').delete().eq('id',id);
+  if(error){toast('Error: '+error.message);return;}
+  toast('Category deleted');renderCfg(areaPg,premPg,catPg);
+}
+
+// ===== INIT =====
+async function init(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(session&&sessionStorage.getItem('mp_mgr')==='1'&&MGRS.includes(session.user.email)){
+    cu=session.user;document.getElementById('page-login').classList.add('hidden');document.getElementById('page-dash').classList.remove('hidden');
+    await loadAreas();dTab('ov');
+  }
+}
+window.addEventListener('DOMContentLoaded',init);
+</script>
+</body>
+</html>

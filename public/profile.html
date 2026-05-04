@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>Business Profile – MyPahad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--g:#1a5c3a;--gl:#e8f5ee;--ac:#e05a2b;--bg:#f0f0ee;--s:#fff;--t:#111;--t2:#4a4a4a;--t3:#888;--bd:#ddd;--r:6px;--rs:4px;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html{font-size:13px;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-height:100vh;overflow-x:hidden;}
+a{color:inherit;text-decoration:none;}
+button{cursor:pointer;font-family:inherit;}
+.shim{background:linear-gradient(90deg,#eee 25%,#e2e2e2 50%,#eee 75%);background-size:200% 100%;animation:sh 1.2s infinite;}
+@keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:7px 16px;border-radius:20px;z-index:9999;font-size:11px;display:none;white-space:nowrap;}
+
+/* TOP BAR */
+.bbar{background:var(--g);padding:7px 10px;display:flex;align-items:center;gap:6px;position:sticky;top:0;z-index:100;}
+.bbtn{background:none;border:none;color:#fff;padding:0;display:flex;align-items:center;justify-content:center;}
+.btitle{font-size:12px;font-weight:600;color:#fff;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.bshare{background:rgba(255,255,255,0.16);border:none;color:#fff;padding:5px 9px;border-radius:var(--rs);font-size:11px;font-weight:600;display:flex;align-items:center;gap:4px;}
+
+/* PROFILE HERO */
+.phero{background:#fff;padding:10px;border-bottom:1px solid var(--bd);}
+.prow{display:flex;gap:10px;align-items:flex-start;}
+.pdp{width:54px;height:54px;border-radius:50%;object-fit:cover;border:2px solid var(--g);flex-shrink:0;}
+.pdpph{width:54px;height:54px;border-radius:50%;background:var(--gl);border:2px solid var(--g);flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.pname{font-size:15px;font-weight:700;line-height:1.2;}
+.pcat{font-size:10px;color:var(--t3);margin-top:2px;}
+.pdesc{font-size:11px;color:var(--t2);margin-top:5px;line-height:1.6;}
+.paddr{font-size:10px;color:var(--t3);margin-top:4px;display:flex;align-items:flex-start;gap:3px;}
+.pbadge{font-size:9px;background:#fff3cd;color:#856404;padding:2px 5px;border-radius:2px;font-weight:600;display:inline-block;margin-top:4px;}
+
+/* ACTION BUTTONS */
+.pact{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap;}
+.bwa{background:#25d366;color:#fff;border:none;padding:7px 12px;border-radius:var(--rs);font-size:12px;font-weight:600;display:flex;align-items:center;gap:4px;}
+.bhrt{background:#fff;color:var(--t);border:1px solid var(--bd);padding:7px 10px;border-radius:var(--rs);font-size:12px;display:flex;align-items:center;gap:4px;}
+.bhrt.on{color:#e74c3c;border-color:#e74c3c;}
+.bsoc{background:#fff;border:1px solid var(--bd);padding:7px 10px;border-radius:var(--rs);font-size:12px;color:var(--t2);}
+
+/* PHOTO STRIP */
+.phstrip{display:flex;gap:6px;overflow-x:auto;padding:8px 10px;background:#fff;border-bottom:1px solid var(--bd);scrollbar-width:none;}
+.phstrip::-webkit-scrollbar{display:none;}
+.pht{width:72px;height:54px;border-radius:var(--rs);object-fit:cover;flex-shrink:0;cursor:pointer;}
+.pht:active{opacity:0.85;}
+
+/* FULLSCREEN PHOTO OVERLAY */
+.photo-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:1000;display:none;align-items:center;justify-content:center;}
+.photo-overlay.open{display:flex;}
+.photo-overlay img{max-width:100%;max-height:100%;object-fit:contain;}
+.photo-close{position:absolute;top:14px;left:14px;width:34px;height:34px;background:rgba(255,255,255,0.12);border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.photo-nav{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);display:flex;gap:6px;}
+.photo-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.3);}
+.photo-dot.on{background:#fff;}
+
+/* LISTINGS */
+.shdr{display:flex;align-items:center;justify-content:space-between;padding:9px 10px 5px;background:#fff;}
+.stitle{font-size:12px;font-weight:600;}
+.scount{font-size:10px;color:var(--t3);}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:0 10px 8px;background:#fff;}
+.gc{background:var(--bg);border-radius:var(--r);border:1px solid var(--bd);overflow:hidden;cursor:pointer;}
+.gcimg{width:100%;aspect-ratio:1;object-fit:cover;display:block;background:var(--gl);}
+.gcph{width:100%;aspect-ratio:1;background:var(--gl);display:flex;align-items:center;justify-content:center;}
+.gcb{padding:5px 5px 6px;}
+.gcn{font-size:10px;font-weight:500;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+.gcp{font-size:10px;color:var(--g);font-weight:600;margin-top:1px;}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+
+<!-- FULLSCREEN PHOTO OVERLAY -->
+<div class="photo-overlay" id="photo-overlay" onclick="closePhoto(event)">
+  <button class="photo-close" onclick="closePhoto()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+  <img id="photo-full" src="" alt=""/>
+  <div class="photo-nav" id="photo-nav"></div>
+</div>
+
+<div class="bbar">
+  <button class="bbtn" onclick="goBack()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+  </button>
+  <span class="btitle" id="ptitle">Loading…</span>
+  <button class="bshare" onclick="shareProfile()">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+    Share
+  </button>
+</div>
+
+<div id="pcontent"></div>
+
+<script>
+const SU='https://khbotkadtbkwqxjxlyhm.supabase.co';
+const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtoYm90a2FkdGJrd3F4anhseWhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5NTU4OTAsImV4cCI6MjA4ODUzMTg5MH0.MnNTuoONyBTGZeO1qYyRUTtkRdFreK0OrOcYk66pWxs';
+const {createClient}=supabase;const sb=createClient(SU,SK);
+let sid=localStorage.getItem('mp_sid');if(!sid){sid=crypto.randomUUID();localStorage.setItem('mp_sid',sid);}
+let currentBiz=null,allPhotos=[],currentPhotoIdx=0;
+
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',2400);}
+function getArea(){try{return JSON.parse(localStorage.getItem('mp_area'));}catch{return null;}}
+function goBack(){
+  const back=localStorage.getItem('mp_prof_back')||'home.html';
+  window.location.href=back;
+}
+
+// WhatsApp number fix — handles all formats
+function fmtWa(raw){
+  if(!raw)return '';
+  let num=String(raw).replace(/\D/g,'');
+  if(num.startsWith('91')&&num.length===12)num=num.slice(2);
+  if(num.length!==10)return '';
+  return '91'+num;
+}
+
+function openProf(bizId){
+  localStorage.setItem('mp_view_biz',bizId);
+  localStorage.setItem('mp_prof_back','profile.html');
+  window.location.href='profile.html';
+}
+function openLst(l){
+  localStorage.setItem('mp_view_lst',JSON.stringify(l));
+  localStorage.setItem('mp_lst_back','profile.html');
+  window.location.href='listing.html';
+}
+
+function openPhoto(idx){
+  if(!allPhotos.length)return;
+  currentPhotoIdx=idx;
+  document.getElementById('photo-full').src=allPhotos[idx];
+  const overlay=document.getElementById('photo-overlay');
+  overlay.classList.add('open');
+  document.body.style.overflow='hidden';
+  renderPhotoDots();
+}
+
+function closePhoto(e){
+  if(e&&e.target!==document.getElementById('photo-overlay')&&!e.currentTarget.classList.contains('photo-close'))return;
+  if(e&&e.target===document.getElementById('photo-full'))return;
+  document.getElementById('photo-overlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+
+function renderPhotoDots(){
+  const nav=document.getElementById('photo-nav');
+  nav.innerHTML='';
+  if(allPhotos.length<=1)return;
+  allPhotos.forEach((_,i)=>{
+    const d=document.createElement('div');
+    d.className='photo-dot'+(i===currentPhotoIdx?' on':'');
+    d.onclick=(e)=>{e.stopPropagation();currentPhotoIdx=i;document.getElementById('photo-full').src=allPhotos[i];renderPhotoDots();};
+    nav.appendChild(d);
+  });
+}
+
+// Swipe on overlay
+let touchStartX=0;
+document.getElementById('photo-overlay').addEventListener('touchstart',e=>{touchStartX=e.touches[0].clientX;},{passive:true});
+document.getElementById('photo-overlay').addEventListener('touchend',e=>{
+  const dx=e.changedTouches[0].clientX-touchStartX;
+  if(Math.abs(dx)>50){
+    currentPhotoIdx=(currentPhotoIdx+(dx<0?1:-1)+allPhotos.length)%allPhotos.length;
+    document.getElementById('photo-full').src=allPhotos[currentPhotoIdx];
+    renderPhotoDots();
+  }
+},{passive:true});
+
+async function shareProfile(){
+  const biz=currentBiz;
+  if(!biz)return;
+  const url=window.location.origin+window.location.pathname+'?bizId='+biz.id;
+  const text=biz.business_name+' on MyPahad\n'+url;
+  if(navigator.share){
+    try{await navigator.share({title:biz.business_name,text:'Check out '+biz.business_name+' on MyPahad!',url});}catch{}
+  } else {
+    try{await navigator.clipboard.writeText(url);toast('Link copied!');}catch{toast('Share: '+url);}
+  }
+}
+
+async function toggleH(bizId,was){
+  if(was){await sb.from('hearts').delete().eq('business_id',bizId).eq('session_id',sid);await sb.rpc('decrement_hearts',{biz_id:bizId});}
+  else{await sb.from('hearts').insert({business_id:bizId,session_id:sid});await sb.rpc('increment_hearts',{biz_id:bizId});}
+  loadProfile(bizId);
+}
+
+async function loadProfile(bizId){
+  if(!bizId){window.location.href='home.html';return;}
+  const area=getArea();
+  sb.from('analytics').insert({area_id:area?.id,business_id:bizId,event_type:'business_view',session_id:sid});
+  const {data:biz}=await sb.from('businesses').select('*,areas(name),categories(name)').eq('id',bizId).single();
+  if(!biz)return;
+  currentBiz=biz;
+  document.getElementById('ptitle').textContent=biz.business_name;
+  document.title=biz.business_name+' – MyPahad';
+
+  const [{data:ph},{data:lst},{data:hr}]=await Promise.all([
+    sb.from('business_photos').select('*').eq('business_id',bizId).order('sort_order'),
+    sb.from('listings').select('*').eq('business_id',bizId).eq('is_available',true),
+    sb.from('hearts').select('id').eq('business_id',bizId).eq('session_id',sid)
+  ]);
+  const hh=hr&&hr.length>0;
+  const prods=lst?.filter(l=>l.listing_type==='product')||[];
+  const servs=lst?.filter(l=>l.listing_type==='service')||[];
+
+  // WhatsApp URL - fixed
+  const waNum=fmtWa(biz.whatsapp);
+  const waMsg=`Hi *${biz.business_name}*,\n\nI found you on MyPahad.in!`;
+  const waHref=waNum?`https://wa.me/${waNum}?text=${encodeURIComponent(waMsg)}`:'';
+
+  allPhotos=ph?ph.map(p=>p.url):[];
+
+  const c=document.getElementById('pcontent');
+  c.innerHTML=`
+    <div class="phero">
+      <div class="prow">
+        ${biz.dp_url?`<img class="pdp" src="${biz.dp_url}" alt="${biz.business_name}"/>`:`<div class="pdpph"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></div>`}
+        <div style="flex:1;min-width:0;">
+          <div class="pname">${biz.business_name}</div>
+          <div class="pcat">${biz.categories?.name||''} · ${biz.areas?.name||''}</div>
+          ${biz.is_premium?'<span class="pbadge">Premium</span>':''}
+        </div>
+      </div>
+      ${biz.description?`<div class="pdesc">${biz.description}</div>`:''}
+      ${biz.address?`<div class="paddr"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>${biz.address}</div>`:''}
+      <div class="pact">
+        ${waHref?`<a href="${waHref}" class="bwa" onclick="sb.from('analytics').insert({area_id:${JSON.stringify(area?.id)},event_type:'whatsapp_click',session_id:sid})"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M5.296 4.048C2.38 4.048 0 6.43 0 9.344c0 1.74.843 3.267 2.145 4.23L1.044 17.5l4.068-1.065a5.28 5.28 0 002.523.641c2.916 0 5.296-2.382 5.296-5.296S8.212 6.484 5.296 6.484V4.048zm0 10.464a3.182 3.182 0 01-1.617-.44l-.116-.069-2.041.535.544-1.988-.076-.122a3.165 3.165 0 01-.486-1.688 3.18 3.18 0 013.174-3.18 3.18 3.18 0 013.18 3.18 3.18 3.18 0 01-3.18 3.18V14.512z" opacity="0"/></svg>WhatsApp</a>`
+        :`<button class="bwa" style="opacity:0.5;" disabled>No WhatsApp</button>`}
+        <button class="bhrt${hh?' on':''}" onclick="toggleH('${bizId}',${hh})"><svg width="11" height="11" viewBox="0 0 24 24" fill="${hh?'currentColor':'none'}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>${biz.hearts||0}</button>
+        ${biz.instagram?`<a href="https://instagram.com/${biz.instagram}" target="_blank" class="bsoc">Instagram</a>`:''}
+        ${biz.facebook?`<a href="${biz.facebook}" target="_blank" class="bsoc">Facebook</a>`:''}
+        ${biz.website&&biz.is_premium?`<a href="${biz.website}" target="_blank" class="bsoc">Website</a>`:''}
+      </div>
+    </div>
+    ${allPhotos.length?`<div class="phstrip" id="phstrip">${allPhotos.map((url,i)=>`<img class="pht" src="${url}" loading="lazy" onclick="openPhoto(${i})"/>`).join('')}</div>`:''}
+    ${prods.length?`<div style="background:#fff;border-top:5px solid var(--bg);"><div class="shdr"><span class="stitle">Products</span><span class="scount">${prods.length}</span></div><div class="g3">${prods.slice(0,9).map(l=>`<div class="gc" onclick='openLst(${JSON.stringify(l).replace(/'/g,"\\'")})'>${l.image_url?`<img class="gcimg" src="${l.image_url}" loading="lazy"/>`:`<div class="gcph"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div>`}<div class="gcb"><div class="gcn">${l.name}</div>${l.price?`<div class="gcp">${l.price}</div>`:''}</div></div>`).join('')}</div></div>`:''}
+    ${servs.length?`<div style="background:#fff;border-top:5px solid var(--bg);"><div class="shdr"><span class="stitle">Services</span><span class="scount">${servs.length}</span></div><div class="g3">${servs.slice(0,9).map(l=>`<div class="gc" onclick='openLst(${JSON.stringify(l).replace(/'/g,"\\'")})'>${l.image_url?`<img class="gcimg" src="${l.image_url}" loading="lazy"/>`:`<div class="gcph"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" stroke-width="1.5"><circle cx="12" cy="12" r="3"/></svg></div>`}<div class="gcb"><div class="gcn">${l.name}</div>${l.price?`<div class="gcp">${l.price}</div>`:''}</div></div>`).join('')}</div></div>`:''}
+    <div style="height:20px;"></div>`;
+}
+
+function init(){
+  const bizId=localStorage.getItem('mp_view_biz');
+  // Also check URL param for direct links
+  const urlBizId=new URLSearchParams(window.location.search).get('bizId');
+  loadProfile(urlBizId||bizId);
+}
+
+init();
+</script>
+</body>
+</html>

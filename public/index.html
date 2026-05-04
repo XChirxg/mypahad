@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>MyPahad – Local Businesses in Pahadi Towns</title>
+<meta name="description" content="Discover local businesses and professionals in Theog, Shimla and Pahadi towns."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--g:#1a5c3a;--gl:#e8f5ee;--ac:#e05a2b;--bg:#f0f0ee;--s:#fff;--t:#111;--t2:#4a4a4a;--t3:#888;--bd:#ddd;--r:8px;--rs:5px;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html{font-size:13px;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-height:100vh;overflow-x:hidden;}
+a{color:inherit;text-decoration:none;}
+button{cursor:pointer;font-family:inherit;}
+.shim{background:linear-gradient(90deg,#eee 25%,#e2e2e2 50%,#eee 75%);background-size:200% 100%;animation:sh 1.2s infinite;}
+@keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:8px 16px;border-radius:20px;z-index:9999;font-size:11px;display:none;white-space:nowrap;}
+
+/* HERO */
+.hero{background:var(--g);padding:28px 16px 24px;text-align:center;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;top:-40px;right:-40px;width:160px;height:160px;background:rgba(255,255,255,0.06);border-radius:50%;}
+.hero::after{content:'';position:absolute;bottom:-30px;left:-30px;width:120px;height:120px;background:rgba(255,255,255,0.04);border-radius:50%;}
+.hero-logo{height:38px;width:auto;margin-bottom:10px;position:relative;z-index:1;}
+.hero-title{color:#fff;font-size:18px;font-weight:700;margin-bottom:4px;position:relative;z-index:1;}
+.hero-sub{color:rgba(255,255,255,0.6);font-size:11px;position:relative;z-index:1;}
+
+/* SELECT PROMPT */
+.select-prompt{margin:20px 14px 10px;text-align:center;}
+.select-prompt-icon{width:48px;height:48px;background:var(--gl);border-radius:50%;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;}
+.select-prompt-title{font-size:16px;font-weight:700;color:var(--t);margin-bottom:4px;}
+.select-prompt-sub{font-size:11px;color:var(--t3);line-height:1.5;}
+
+/* PAHAD GRID */
+.pahad-section{padding:0 14px 16px;}
+.pahad-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--t3);margin-bottom:10px;}
+.pahad-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.pahad-card{background:#fff;border:2px solid var(--bd);border-radius:var(--r);padding:14px 12px;cursor:pointer;transition:border-color 0.15s,transform 0.1s;display:flex;align-items:center;gap:10px;position:relative;}
+.pahad-card:active{transform:scale(0.97);}
+.pahad-card.active-area{border-color:var(--g);background:var(--gl);}
+.pahad-card.na{opacity:0.45;cursor:default;pointer-events:none;}
+.pahad-icon{width:36px;height:36px;border-radius:6px;background:var(--gl);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.pahad-card.na .pahad-icon{background:#f0f0ee;}
+.pahad-name{font-size:12px;font-weight:600;line-height:1.3;}
+.pahad-soon{font-size:9px;color:var(--t3);margin-top:1px;}
+.pahad-check{position:absolute;top:8px;right:8px;width:16px;height:16px;background:var(--g);border-radius:50%;display:none;align-items:center;justify-content:center;}
+.pahad-card.active-area .pahad-check{display:flex;}
+
+/* SHIMMER CARDS */
+.pahad-card-shim{background:#fff;border-radius:var(--r);padding:14px 12px;display:flex;gap:10px;align-items:center;}
+
+/* ENTER BUTTON */
+.enter-wrap{padding:0 14px 24px;}
+.enter-btn{width:100%;background:var(--g);color:#fff;border:none;padding:13px;border-radius:var(--r);font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;transition:opacity 0.15s;}
+.enter-btn:disabled{opacity:0.4;pointer-events:none;}
+
+/* FEATURES */
+.features{padding:0 14px 20px;}
+.feat-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--t3);margin-bottom:10px;}
+.feat-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.feat-item{background:#fff;border:1px solid var(--bd);border-radius:var(--r);padding:10px 9px;display:flex;align-items:flex-start;gap:8px;}
+.feat-ico{width:28px;height:28px;border-radius:6px;background:var(--gl);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.feat-ttl{font-size:11px;font-weight:600;line-height:1.3;margin-bottom:2px;}
+.feat-sub{font-size:9px;color:var(--t3);line-height:1.4;}
+
+/* TAGLINE */
+.tagline{margin:0 14px 20px;background:var(--g);border-radius:var(--r);padding:12px;display:flex;align-items:center;gap:10px;}
+.tagline p{font-size:11px;color:rgba(255,255,255,0.85);line-height:1.5;}
+.tagline strong{color:#fff;}
+
+/* PARTNER */
+.partner-cta{text-align:center;padding:0 14px 28px;}
+.partner-cta a{font-size:11px;color:var(--t3);}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+
+<div class="hero">
+  <img src="logo.png" class="hero-logo" alt="MyPahad" onerror="this.style.display='none';document.querySelector('.hero-title-fallback').style.display='block'"/>
+  <div class="hero-title hero-title-fallback" style="display:none;font-size:22px;">MyPahad</div>
+  <div class="hero-title">Apne Pahad ka Bazaar</div>
+  <div class="hero-sub">Local businesses &amp; professionals in your Pahadi town</div>
+</div>
+
+<div class="select-prompt">
+  <div class="select-prompt-icon">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+  </div>
+  <div class="select-prompt-title">Select your Pahad</div>
+  <div class="select-prompt-sub">Tap on your town below to see<br/>local shops, services &amp; products</div>
+</div>
+
+<div class="pahad-section">
+  <div class="pahad-label">Available towns</div>
+  <div class="pahad-grid" id="pahad-grid">
+    <div class="pahad-card-shim"><div class="shim" style="width:36px;height:36px;border-radius:6px;flex-shrink:0;"></div><div style="flex:1;"><div class="shim" style="height:11px;border-radius:3px;margin-bottom:4px;"></div><div class="shim" style="height:9px;width:60%;border-radius:3px;"></div></div></div>
+    <div class="pahad-card-shim"><div class="shim" style="width:36px;height:36px;border-radius:6px;flex-shrink:0;"></div><div style="flex:1;"><div class="shim" style="height:11px;border-radius:3px;margin-bottom:4px;"></div><div class="shim" style="height:9px;width:60%;border-radius:3px;"></div></div></div>
+    <div class="pahad-card-shim"><div class="shim" style="width:36px;height:36px;border-radius:6px;flex-shrink:0;"></div><div style="flex:1;"><div class="shim" style="height:11px;border-radius:3px;margin-bottom:4px;"></div><div class="shim" style="height:9px;width:60%;border-radius:3px;"></div></div></div>
+    <div class="pahad-card-shim"><div class="shim" style="width:36px;height:36px;border-radius:6px;flex-shrink:0;"></div><div style="flex:1;"><div class="shim" style="height:11px;border-radius:3px;margin-bottom:4px;"></div><div class="shim" style="height:9px;width:60%;border-radius:3px;"></div></div></div>
+  </div>
+</div>
+
+<div class="enter-wrap" id="enter-wrap" style="display:none;">
+  <button class="enter-btn" id="enter-btn" onclick="enterArea()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+    Enter your town
+  </button>
+</div>
+
+<div class="features">
+  <div class="feat-label">What you'll find</div>
+  <div class="feat-grid">
+    <div class="feat-item">
+      <div class="feat-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></div>
+      <div><div class="feat-ttl">Local Businesses</div><div class="feat-sub">Verified shops &amp; services near you</div></div>
+    </div>
+    <div class="feat-item">
+      <div class="feat-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
+      <div><div class="feat-ttl">WhatsApp Direct</div><div class="feat-sub">Contact sellers instantly</div></div>
+    </div>
+    <div class="feat-item">
+      <div class="feat-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
+      <div><div class="feat-ttl">Products &amp; Services</div><div class="feat-sub">Daily needs to skilled work</div></div>
+    </div>
+    <div class="feat-item">
+      <div class="feat-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+      <div><div class="feat-ttl">Free Listing</div><div class="feat-sub">List your business at no cost</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="tagline">
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.65)" stroke-width="1.5" style="flex-shrink:0"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+  <p><strong>Pahadi towns, online.</strong> Find local grocers, tailors, carpenters, dairy farms and more — right in your village.</p>
+</div>
+
+<div class="partner-cta">
+  <a href="partner.html">Own a business? List on MyPahad →</a>
+</div>
+
+<script>
+const SU='https://khbotkadtbkwqxjxlyhm.supabase.co';
+const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtoYm90a2FkdGJrd3F4anhseWhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5NTU4OTAsImV4cCI6MjA4ODUzMTg5MH0.MnNTuoONyBTGZeO1qYyRUTtkRdFreK0OrOcYk66pWxs';
+const {createClient}=supabase;const sb=createClient(SU,SK);
+let selectedArea=null;
+
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',2400);}
+
+async function loadAreas(){
+  const {data}=await sb.from('areas').select('*').order('name');
+  if(!data)return;
+  const grid=document.getElementById('pahad-grid');
+  grid.innerHTML='';
+  const saved=localStorage.getItem('mp_area');
+  let savedArea=null;try{savedArea=JSON.parse(saved);}catch{}
+  data.forEach(a=>{
+    const card=document.createElement('div');
+    card.className='pahad-card'+(a.is_active?'':' na')+(savedArea&&savedArea.id===a.id?' active-area':'');
+    card.innerHTML=`
+      <div class="pahad-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${a.is_active?'#1a5c3a':'#aaa'}" stroke-width="1.8">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
+        </svg>
+      </div>
+      <div>
+        <div class="pahad-name">${a.name}</div>
+        ${!a.is_active?'<div class="pahad-soon">Coming soon</div>':''}
+      </div>
+      <div class="pahad-check">
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>`;
+    if(a.is_active){
+      card.onclick=()=>selectArea(a,card);
+      if(savedArea&&savedArea.id===a.id){selectedArea=a;}
+    }
+    grid.appendChild(card);
+  });
+  if(selectedArea){
+    document.getElementById('enter-wrap').style.display='block';
+    document.getElementById('enter-btn').textContent='';
+    document.getElementById('enter-btn').innerHTML=`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg> Enter ${selectedArea.name}`;
+  }
+}
+
+function selectArea(a,card){
+  selectedArea=a;
+  document.querySelectorAll('.pahad-card').forEach(c=>c.classList.remove('active-area'));
+  card.classList.add('active-area');
+  const wrap=document.getElementById('enter-wrap');
+  wrap.style.display='block';
+  document.getElementById('enter-btn').innerHTML=`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg> Enter ${a.name}`;
+  // smooth scroll to button
+  setTimeout(()=>wrap.scrollIntoView({behavior:'smooth',block:'nearest'}),100);
+}
+
+function enterArea(){
+  if(!selectedArea)return;
+  localStorage.setItem('mp_area',JSON.stringify(selectedArea));
+  window.location.href='home.html';
+}
+
+loadAreas();
+
+// Handle direct @username links
+(async()=>{
+  const path=window.location.pathname;
+  const hash=window.location.hash;
+  const search=window.location.search;
+  const raw=path.match(/\/@([a-z0-9_]+)/i)||hash.match(/#@([a-z0-9_]+)/i)||search.match(/[?&]@([a-z0-9_]+)/i);
+  if(raw&&raw[1]){
+    const uname=raw[1].toLowerCase();
+    const {data:biz}=await sb.from('businesses').select('id,area_id,areas(id,name,slug,is_active)').eq('username',uname).single();
+    if(biz&&biz.areas){
+      localStorage.setItem('mp_area',JSON.stringify(biz.areas));
+      localStorage.setItem('mp_open_biz',biz.id);
+      window.location.href='home.html';
+    } else {
+      setTimeout(()=>toast('Profile not found: @'+uname),600);
+    }
+  }
+})();
+</script>
+</body>
+</html>

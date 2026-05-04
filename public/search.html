@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>Search – MyPahad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--g:#1a5c3a;--gl:#e8f5ee;--ac:#e05a2b;--bg:#f0f0ee;--s:#fff;--t:#111;--t2:#4a4a4a;--t3:#888;--bd:#ddd;--r:6px;--rs:4px;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html{font-size:13px;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-height:100vh;padding-bottom:60px;}
+a{color:inherit;text-decoration:none;}
+button{cursor:pointer;font-family:inherit;}
+input{font-family:inherit;}
+.shim{background:linear-gradient(90deg,#eee 25%,#e2e2e2 50%,#eee 75%);background-size:200% 100%;animation:sh 1.2s infinite;}
+@keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
+#toast{position:fixed;bottom:72px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:7px 16px;border-radius:20px;z-index:9999;font-size:11px;display:none;white-space:nowrap;}
+
+/* TOP SEARCH BAR */
+.search-top{background:var(--g);padding:8px 12px 10px;position:sticky;top:0;z-index:100;}
+.search-title{color:#fff;font-size:13px;font-weight:600;margin-bottom:6px;opacity:0.85;}
+.srchwrap{position:relative;display:flex;gap:6px;align-items:center;}
+.srchinp{padding:9px 9px 9px 34px;border:none;font-size:13px;border-radius:var(--rs);background:#fff;width:100%;color:var(--t);outline:none;}
+.srchinp::placeholder{color:#aaa;}
+.srchico{position:absolute;left:9px;top:50%;transform:translateY(-50%);pointer-events:none;}
+.srch-gobtn{flex-shrink:0;height:38px;padding:0 12px;background:var(--ac);color:#fff;border:none;border-radius:var(--rs);font-size:12px;font-weight:600;white-space:nowrap;}
+
+/* DROPDOWN */
+.srchdrop{position:absolute;top:calc(100% + 4px);left:0;right:48px;background:#fff;border:1px solid var(--bd);border-radius:var(--rs);z-index:200;max-height:260px;overflow-y:auto;box-shadow:0 6px 18px rgba(0,0,0,0.18);display:none;}
+.srchdrop.open{display:block;}
+.srchdrop-sec{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--t3);padding:6px 10px 2px;background:#fafafa;border-bottom:1px solid #f0f0f0;}
+.srchrow{display:flex;align-items:center;gap:7px;padding:8px 10px;cursor:pointer;border-bottom:1px solid #f5f5f5;}
+.srchrow:last-child{border-bottom:none;}
+.srchrow:active{background:var(--gl);}
+.srch-thumb{width:32px;height:32px;border-radius:var(--rs);object-fit:cover;flex-shrink:0;background:var(--gl);}
+.srch-ph{width:32px;height:32px;border-radius:var(--rs);background:var(--gl);flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.srch-name{font-size:11px;font-weight:500;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.srch-meta{font-size:9px;color:var(--t3);}
+.srch-tag{font-size:9px;background:#f0f0ee;color:var(--t3);padding:1px 5px;border-radius:2px;white-space:nowrap;flex-shrink:0;}
+
+/* RESULTS */
+.srp-body{padding:0 0 16px;}
+.srp-sec{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--t3);padding:10px 10px 5px;border-bottom:1px solid var(--bd);background:#fff;}
+.srp-row{display:flex;gap:9px;padding:10px 10px;background:#fff;border-bottom:1px solid #f0f0f0;cursor:pointer;align-items:flex-start;}
+.srp-row:active{background:var(--gl);}
+.srp-thumb{width:90px;height:66px;border-radius:var(--rs);object-fit:cover;flex-shrink:0;background:var(--gl);}
+.srp-ph{width:90px;height:66px;border-radius:var(--rs);background:var(--gl);flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.srp-info{flex:1;min-width:0;padding-top:1px;}
+.srp-name{font-size:12px;font-weight:600;line-height:1.4;margin-bottom:2px;}
+.srp-price{font-size:12px;color:var(--g);font-weight:700;margin-bottom:2px;}
+.srp-biz{font-size:10px;color:var(--t3);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.srp-desc{font-size:10px;color:var(--t2);margin-top:2px;line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+.srp-type{font-size:9px;background:var(--gl);color:var(--g);padding:1px 5px;border-radius:2px;display:inline-block;margin-top:3px;font-weight:600;}
+.srp-empty{text-align:center;padding:36px 16px 6px;}
+.srp-empty svg{opacity:0.25;margin-bottom:10px;}
+.srp-empty p{font-size:13px;font-weight:600;color:var(--t2);margin-bottom:4px;}
+.srp-empty small{font-size:11px;color:var(--t3);}
+.srp-explore{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--t3);padding:12px 10px 5px;}
+
+/* EMPTY STATE (before search) */
+.search-hint{text-align:center;padding:44px 24px;}
+.search-hint svg{opacity:0.2;margin-bottom:12px;}
+.search-hint p{font-size:13px;color:var(--t3);}
+
+/* BOTTOM NAV */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e8e8e8;display:flex;z-index:200;padding-bottom:env(safe-area-inset-bottom,0);}
+.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px 6px;cursor:pointer;border:none;background:none;font-family:inherit;color:var(--t3);font-size:9px;gap:3px;}
+.bnav-item.active{color:var(--g);}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+
+<div class="search-top">
+  <div class="search-title">Search</div>
+  <div class="srchwrap">
+    <svg class="srchico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input class="srchinp" id="srch-inp" type="text" placeholder="Search listings, businesses…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+      oninput="onSrch(this.value)"
+      onfocus="onSrch(this.value)"
+      onblur="setTimeout(()=>closeSrch(),200)"
+      onkeydown="if(event.key==='Enter'){event.preventDefault();goSearch();}"/>
+    <div class="srchdrop" id="srch-drop"></div>
+    <button class="srch-gobtn" onclick="goSearch()">Search</button>
+  </div>
+</div>
+
+<div id="srp-body" class="srp-body">
+  <div class="search-hint">
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <p>Type to search in <span id="area-name-hint"></span></p>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <button class="bnav-item" onclick="window.location.href='home.html'">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+    Home
+  </button>
+  <button class="bnav-item active" onclick="window.location.href='search.html'">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    Search
+  </button>
+  <button class="bnav-item" onclick="window.location.href='businesses.html'">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+    Businesses
+  </button>
+</nav>
+
+<script>
+const SU='https://khbotkadtbkwqxjxlyhm.supabase.co';
+const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtoYm90a2FkdGJrd3F4anhseWhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5NTU4OTAsImV4cCI6MjA4ODUzMTg5MH0.MnNTuoONyBTGZeO1qYyRUTtkRdFreK0OrOcYk66pWxs';
+const {createClient}=supabase;const sb=createClient(SU,SK);
+let area=null,_srchT=null;
+let sid=localStorage.getItem('mp_sid');if(!sid){sid=crypto.randomUUID();localStorage.setItem('mp_sid',sid);}
+
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',2400);}
+function getArea(){try{return JSON.parse(localStorage.getItem('mp_area'));}catch{return null;}}
+
+function openProf(bizId){
+  localStorage.setItem('mp_view_biz',bizId);
+  localStorage.setItem('mp_prof_back','search.html');
+  window.location.href='profile.html';
+}
+function openLst(l){
+  localStorage.setItem('mp_view_lst',JSON.stringify(l));
+  localStorage.setItem('mp_lst_back','search.html');
+  window.location.href='listing.html';
+}
+
+function closeSrch(){document.getElementById('srch-drop').classList.remove('open');}
+
+function goSearch(){
+  const q=document.getElementById('srch-inp').value.trim();
+  if(!q||q.length<2)return;
+  closeSrch();
+  document.getElementById('srch-inp').blur();
+  renderSearchResults(q);
+}
+
+async function onSrch(val){
+  clearTimeout(_srchT);
+  const q=(val||'').trim();
+  const drop=document.getElementById('srch-drop');
+  if(!q||q.length<2){drop.classList.remove('open');return;}
+  _srchT=setTimeout(async()=>{
+    if(!area)return;
+    const [lstRes,bizRes]=await Promise.all([
+      sb.from('listings').select('id,name,price,image_url,listing_type,business_id,businesses!inner(id,business_name,area_id,is_approved,is_active,whatsapp)').ilike('name','%'+q+'%').eq('businesses.area_id',area.id).eq('businesses.is_approved',true).eq('businesses.is_active',true).eq('is_available',true).limit(5),
+      sb.from('businesses').select('id,business_name,dp_url,categories(name)').ilike('business_name','%'+q+'%').eq('area_id',area.id).eq('is_approved',true).eq('is_active',true).limit(3)
+    ]);
+    const lsts=lstRes.data||[];const bizs=bizRes.data||[];
+    drop.innerHTML='';
+    if(!lsts.length&&!bizs.length){
+      drop.innerHTML='<div style="padding:10px 12px;font-size:11px;color:var(--t3);">No quick results — press Search</div>';
+      drop.classList.add('open');return;
+    }
+    if(bizs.length){
+      const s=document.createElement('div');s.className='srchdrop-sec';s.textContent='Businesses';drop.appendChild(s);
+      bizs.forEach(b=>{
+        const r=document.createElement('div');r.className='srchrow';
+        r.innerHTML=`${b.dp_url?`<img class="srch-thumb" src="${b.dp_url}" loading="lazy"/>`:`<div class="srch-ph"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></div>`}<div style="flex:1;min-width:0;"><div class="srch-name">${b.business_name}</div><div class="srch-meta">${b.categories?.name||''}</div></div><span class="srch-tag">Shop</span>`;
+        r.onmousedown=(e)=>{e.preventDefault();document.getElementById('srch-inp').value='';closeSrch();openProf(b.id);};
+        r.ontouchend=(e)=>{e.preventDefault();document.getElementById('srch-inp').value='';closeSrch();openProf(b.id);};
+        drop.appendChild(r);
+      });
+    }
+    if(lsts.length){
+      const s=document.createElement('div');s.className='srchdrop-sec';s.textContent='Listings';drop.appendChild(s);
+      lsts.forEach(l=>{
+        const r=document.createElement('div');r.className='srchrow';
+        r.innerHTML=`${l.image_url?`<img class="srch-thumb" src="${l.image_url}" loading="lazy"/>`:`<div class="srch-ph"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div>`}<div style="flex:1;min-width:0;"><div class="srch-name">${l.name}</div><div class="srch-meta">${l.businesses?.business_name||''}</div></div>${l.price?`<span class="srch-tag">${l.price}</span>`:''}`;
+        r.onmousedown=(e)=>{e.preventDefault();document.getElementById('srch-inp').value='';closeSrch();openLst(l);};
+        r.ontouchend=(e)=>{e.preventDefault();document.getElementById('srch-inp').value='';closeSrch();openLst(l);};
+        drop.appendChild(r);
+      });
+    }
+    const seeAll=document.createElement('div');
+    seeAll.style.cssText='padding:8px 10px;font-size:11px;color:var(--g);font-weight:600;text-align:center;border-top:1px solid #f0f0f0;cursor:pointer;';
+    seeAll.textContent='See all results →';
+    seeAll.onmousedown=(e)=>{e.preventDefault();goSearch();};
+    seeAll.ontouchend=(e)=>{e.preventDefault();goSearch();};
+    drop.appendChild(seeAll);
+    drop.classList.add('open');
+  },280);
+}
+
+async function renderSearchResults(q){
+  const body=document.getElementById('srp-body');
+  body.innerHTML=[...Array(4)].map(()=>`<div class="srp-row"><div class="srp-ph shim" style="width:90px;height:66px;"></div><div style="flex:1;padding-top:1px;"><div class="shim" style="height:12px;border-radius:2px;margin-bottom:5px;width:80%;"></div><div class="shim" style="height:10px;border-radius:2px;margin-bottom:5px;width:40%;"></div><div class="shim" style="height:9px;border-radius:2px;width:60%;"></div></div></div>`).join('');
+  if(!area){body.innerHTML='<div class="srp-empty"><p>Select a town first</p></div>';return;}
+  const [lstRes,bizRes]=await Promise.all([
+    sb.from('listings').select('id,name,price,image_url,listing_type,description,business_id,businesses!inner(id,business_name,area_id,is_approved,is_active,whatsapp)').ilike('name','%'+q+'%').eq('businesses.area_id',area.id).eq('businesses.is_approved',true).eq('businesses.is_active',true).eq('is_available',true).limit(20),
+    sb.from('businesses').select('id,business_name,dp_url,description,categories(name),areas(name)').ilike('business_name','%'+q+'%').eq('area_id',area.id).eq('is_approved',true).eq('is_active',true).limit(10)
+  ]);
+  const lsts=lstRes.data||[];const bizs=bizRes.data||[];
+  const total=lsts.length+bizs.length;
+  body.innerHTML='';
+  if(!total){
+    body.innerHTML=`<div class="srp-empty"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><p>No results for "${q}"</p><small>Try a different keyword or browse below</small></div>`;
+    const {data:explore}=await sb.from('listings').select('id,name,price,image_url,listing_type,description,business_id,businesses!inner(id,business_name,area_id,is_approved,is_active,whatsapp)').eq('businesses.area_id',area.id).eq('businesses.is_approved',true).eq('businesses.is_active',true).eq('is_available',true).limit(30);
+    if(explore&&explore.length){
+      const shuffled=explore.sort(()=>Math.random()-0.5).slice(0,5);
+      const expSec=document.createElement('div');
+      expSec.innerHTML=`<div class="srp-explore">Explore in ${area.name}</div>`;
+      shuffled.forEach(l=>{expSec.appendChild(mkSrpRow(l));});
+      body.appendChild(expSec);
+    }
+    return;
+  }
+  if(bizs.length){
+    const sec=document.createElement('div');sec.className='srp-sec';sec.textContent='Businesses ('+bizs.length+')';body.appendChild(sec);
+    bizs.forEach(b=>{
+      const row=document.createElement('div');row.className='srp-row';
+      row.innerHTML=`${b.dp_url?`<img class="srp-thumb" src="${b.dp_url}" loading="lazy"/>`:`<div class="srp-ph"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></div>`}<div class="srp-info"><div class="srp-name">${b.business_name}</div>${b.categories?.name?`<div class="srp-biz">${b.categories.name}</div>`:''}${b.description?`<div class="srp-desc">${b.description}</div>`:''}<span class="srp-type">Shop</span></div>`;
+      row.onclick=()=>openProf(b.id);body.appendChild(row);
+    });
+  }
+  if(lsts.length){
+    const sec=document.createElement('div');sec.className='srp-sec';sec.textContent='Listings ('+lsts.length+')';body.appendChild(sec);
+    lsts.forEach(l=>{body.appendChild(mkSrpRow(l));});
+  }
+}
+
+function mkSrpRow(l){
+  const row=document.createElement('div');row.className='srp-row';
+  row.innerHTML=`${l.image_url?`<img class="srp-thumb" src="${l.image_url}" loading="lazy"/>`:`<div class="srp-ph"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>`}<div class="srp-info"><div class="srp-name">${l.name}</div>${l.price?`<div class="srp-price">${l.price}</div>`:''}<div class="srp-biz">${l.businesses?.business_name||''}</div>${l.description?`<div class="srp-desc">${l.description}</div>`:''}<span class="srp-type">${l.listing_type||''}</span></div>`;
+  row.onclick=()=>openLst(l);
+  return row;
+}
+
+function init(){
+  area=getArea();
+  if(!area){window.location.href='index.html';return;}
+  document.getElementById('area-name-hint').textContent=area.name;
+  // Auto-focus search on load
+  setTimeout(()=>document.getElementById('srch-inp').focus(),300);
+  // Check if coming with a prefilled query
+  const savedQ=sessionStorage.getItem('mp_search_q');
+  if(savedQ){sessionStorage.removeItem('mp_search_q');document.getElementById('srch-inp').value=savedQ;renderSearchResults(savedQ);}
+}
+
+init();
+</script>
+</body>
+</html>
