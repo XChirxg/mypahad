@@ -18,6 +18,7 @@ interface Business {
   id: string;
   business_name: string;
   dp_url: string | null;
+  username?: string | null;
 }
 
 interface Ad {
@@ -45,6 +46,7 @@ interface Listing {
 interface Category {
   id: string;
   name: string;
+  slug: string;
 }
 
 interface TownFeedProps {
@@ -84,6 +86,17 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
   // Seeds & Session
   const [sessionSeed, setSessionSeed] = useState('');
   const [sid, setSid] = useState('');
+  const [bizUsernames, setBizUsernames] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const initialMap: Record<string, string> = {};
+    stories.forEach(s => {
+      if (s.id && s.username) {
+        initialMap[s.id] = s.username;
+      }
+    });
+    setBizUsernames(initialMap);
+  }, [stories]);
 
   useEffect(() => {
     // Save current town to localStorage to maintain backward compatibility
@@ -109,7 +122,7 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
       area_id: area.id,
       event_type: 'area_visit',
       session_id: savedSid
-    }).then();
+    }).then(null, err => console.warn('Analytics tracking failed:', err));
 
     // Check cart count
     updateCartCount();
@@ -265,10 +278,37 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
     }
   };
 
-  const openProduct = (l: Listing) => {
+  const generateSlug = (text: string) => {
+    return text
+      .toString()
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^\w\-]+/g, '')
+      .replace(/\-\-+/g, '-')
+      .replace(/^-+/, '')
+      .replace(/-+$/, '');
+  };
+
+  const openProduct = async (l: Listing) => {
     localStorage.setItem('mp_view_lst', JSON.stringify(l));
-    localStorage.setItem('mp_lst_back', `/town/${area.slug}`);
-    router.push(`/listing/${l.id}`);
+    localStorage.setItem('mp_lst_back', `/${area.slug}`);
+
+    let username = bizUsernames[l.business_id];
+    if (!username) {
+      const { data } = await supabase
+        .from('businesses')
+        .select('username')
+        .eq('id', l.business_id)
+        .single();
+      if (data?.username) {
+        username = data.username;
+        setBizUsernames(prev => ({ ...prev, [l.business_id]: data.username }));
+      }
+    }
+
+    const prodSlug = generateSlug(l.name);
+    router.push(`/${username || 'shop'}-${prodSlug}-in-${area.slug}`);
   };
 
   const parsePrice = (p: string | null) => {
@@ -348,8 +388,8 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
               key={b.id} 
               onClick={() => {
                 localStorage.setItem('mp_view_biz', b.id);
-                localStorage.setItem('mp_prof_back', `/town/${area.slug}`);
-                router.push(`/profile/${b.id}`);
+                localStorage.setItem('mp_prof_back', `/${area.slug}`);
+                router.push(`/${b.username || 'shop'}-in-${area.slug}`);
               }}
               className="shrink-0 text-center w-12 cursor-pointer"
             >
@@ -512,12 +552,12 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
                     </div>
                     {listings.length >= 6 && (
                       <div className="flex justify-center mt-3 pt-2.5 border-t border-dashed border-[#ddd] px-1">
-                        <button 
-                          onClick={() => openDetailView(cat)}
-                          className="bg-none border border-[#1a5c3a] text-[#1a5c3a] text-[10px] font-semibold cursor-pointer py-1.5 px-3 rounded w-full hover:bg-[#1a5c3a] hover:text-white transition-colors"
+                        <Link 
+                          href={`/${cat.slug}-in-${area.slug}`}
+                          className="bg-none border border-[#1a5c3a] text-[#1a5c3a] text-[10px] font-semibold cursor-pointer py-1.5 px-3 rounded w-full hover:bg-[#1a5c3a] hover:text-white transition-colors text-center block"
                         >
                           View More →
-                        </button>
+                        </Link>
                       </div>
                     )}
                   </>
@@ -642,25 +682,25 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
           </svg>
           Home
         </button>
-        <button 
-          onClick={() => { setActiveTab('search'); router.push('/search'); }}
-          className={`flex-1 flex flex-col items-center justify-center py-2 px-1 text-[9px] gap-0.5 bg-none border-none ${activeTab === 'search' ? 'text-[#1a5c3a]' : 'text-gray-400'}`}
+        <Link 
+          href="/search"
+          className="flex-1 flex flex-col items-center justify-center py-2 px-1 text-[9px] gap-0.5 text-gray-400 hover:text-[#1a5c3a] transition-colors"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <circle cx="11" cy="11" r="8"/>
             <line x1="21" y1="21" x2="16.65" y2="16.65"/>
           </svg>
           Search
-        </button>
-        <button 
-          onClick={() => { setActiveTab('businesses'); router.push('/search?tab=businesses'); }}
-          className={`flex-1 flex flex-col items-center justify-center py-2 px-1 text-[9px] gap-0.5 bg-none border-none ${activeTab === 'businesses' ? 'text-[#1a5c3a]' : 'text-gray-400'}`}
+        </Link>
+        <Link 
+          href="/search?tab=businesses"
+          className="flex-1 flex flex-col items-center justify-center py-2 px-1 text-[9px] gap-0.5 text-gray-400 hover:text-[#1a5c3a] transition-colors"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
           </svg>
           Businesses
-        </button>
+        </Link>
       </nav>
     </div>
   );

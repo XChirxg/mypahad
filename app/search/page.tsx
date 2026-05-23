@@ -18,10 +18,15 @@ interface Category {
 interface Business {
   id: string;
   business_name: string;
+  username?: string | null;
   dp_url: string | null;
   description: string | null;
   user_id: string | null;
   categories?: Category;
+  areas?: {
+    name?: string;
+    slug: string;
+  };
 }
 
 interface Listing {
@@ -36,6 +41,10 @@ interface Listing {
   businesses?: {
     id: string;
     business_name: string;
+    username?: string | null;
+    areas?: {
+      slug: string;
+    };
   };
 }
 
@@ -71,7 +80,24 @@ function SearchContent() {
       const saved = localStorage.getItem('mp_area');
       if (saved) {
         const areaObj = JSON.parse(saved) as Area;
-        setCurrentArea(areaObj);
+        if (areaObj && areaObj.id && !areaObj.slug) {
+          supabase
+            .from('areas')
+            .select('slug, name')
+            .eq('id', areaObj.id)
+            .single()
+            .then(({ data }) => {
+              if (data) {
+                const fullArea = { ...areaObj, slug: data.slug, name: data.name };
+                localStorage.setItem('mp_area', JSON.stringify(fullArea));
+                setCurrentArea(fullArea);
+              } else {
+                setCurrentArea(areaObj);
+              }
+            });
+        } else {
+          setCurrentArea(areaObj);
+        }
       } else {
         router.push('/');
       }
@@ -110,7 +136,7 @@ function SearchContent() {
     try {
       const { data } = await supabase
         .from('businesses')
-        .select('id, business_name, dp_url, description, user_id, categories(name)')
+        .select('id, business_name, username, dp_url, description, user_id, categories(name), areas(slug)')
         .eq('area_id', currentArea.id)
         .eq('is_approved', true)
         .eq('is_active', true)
@@ -140,7 +166,7 @@ function SearchContent() {
         const [lstRes, bizRes] = await Promise.all([
           supabase
             .from('listings')
-            .select('id, name, price, discount_price, image_url, listing_type, business_id, businesses!inner(id, business_name, area_id, is_approved, is_active)')
+            .select('id, name, price, discount_price, image_url, listing_type, business_id, businesses!inner(id, business_name, username, area_id, is_approved, is_active, areas(slug))')
             .ilike('name', `%${q}%`)
             .eq('businesses.area_id', currentArea.id)
             .eq('businesses.is_approved', true)
@@ -149,7 +175,7 @@ function SearchContent() {
             .limit(5),
           supabase
             .from('businesses')
-            .select('id, business_name, dp_url, user_id, categories(name)')
+            .select('id, business_name, username, dp_url, user_id, categories(name), areas(slug)')
             .ilike('business_name', `%${q}%`)
             .eq('area_id', currentArea.id)
             .eq('is_approved', true)
@@ -180,7 +206,7 @@ function SearchContent() {
       const [lstRes, bizRes] = await Promise.all([
         supabase
           .from('listings')
-          .select('id, name, price, discount_price, image_url, listing_type, description, business_id, businesses!inner(id, business_name, area_id, is_approved, is_active)')
+          .select('id, name, price, discount_price, image_url, listing_type, description, business_id, businesses!inner(id, business_name, username, area_id, is_approved, is_active, areas(slug))')
           .ilike('name', `%${q}%`)
           .eq('businesses.area_id', currentArea.id)
           .eq('businesses.is_approved', true)
@@ -189,7 +215,7 @@ function SearchContent() {
           .limit(20),
         supabase
           .from('businesses')
-          .select('id, business_name, dp_url, description, user_id, categories(name), areas(name)')
+          .select('id, business_name, username, dp_url, description, user_id, categories(name), areas(name, slug)')
           .ilike('business_name', `%${q}%`)
           .eq('area_id', currentArea.id)
           .eq('is_approved', true)
@@ -207,7 +233,7 @@ function SearchContent() {
       if (lsts.length === 0 && bizs.length === 0) {
         const { data } = await supabase
           .from('listings')
-          .select('id, name, price, discount_price, image_url, listing_type, description, business_id, businesses!inner(id, business_name, area_id, is_approved, is_active)')
+          .select('id, name, price, discount_price, image_url, listing_type, description, business_id, businesses!inner(id, business_name, username, area_id, is_approved, is_active, areas(slug))')
           .eq('businesses.area_id', currentArea.id)
           .eq('businesses.is_approved', true)
           .eq('businesses.is_active', true)
@@ -226,16 +252,33 @@ function SearchContent() {
     }
   };
 
+  const generateSlug = (text: string) => {
+    return text
+      .toString()
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^\w\-]+/g, '')
+      .replace(/\-\-+/g, '-')
+      .replace(/^-+/, '')
+      .replace(/-+$/, '');
+  };
+
   const openProduct = (l: Listing) => {
     localStorage.setItem('mp_view_lst', JSON.stringify(l));
     localStorage.setItem('mp_lst_back', '/search');
-    router.push(`/listing/${l.id}`);
+    const bizUsername = l.businesses?.username || 'shop';
+    const areaSlug = l.businesses?.areas?.slug || currentArea?.slug || 'town';
+    const prodSlug = generateSlug(l.name);
+    router.push(`/${bizUsername}-${prodSlug}-in-${areaSlug}`);
   };
 
-  const openProfile = (bizId: string) => {
-    localStorage.setItem('mp_view_biz', bizId);
+  const openProfile = (b: Business) => {
+    localStorage.setItem('mp_view_biz', b.id);
     localStorage.setItem('mp_prof_back', '/search');
-    router.push(`/profile/${bizId}`);
+    const areaSlug = b.areas?.slug || currentArea?.slug || 'town';
+    const bizUsername = b.username || 'shop';
+    router.push(`/${bizUsername}-in-${areaSlug}`);
   };
 
   const parsePrice = (p: string | null) => {
@@ -308,21 +351,22 @@ function SearchContent() {
       <div className="bg-[#1a5c3a] p-2 px-3 sticky top-0 z-50">
         <div className="text-white text-xs font-bold mb-1.5 opacity-85">Search</div>
         <div className="flex gap-1.5 items-center relative" ref={dropdownRef}>
-          <div className="relative flex-1">
-            <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2.5">
-              <circle cx="11" cy="11" r="8"/>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-            <input 
-              type="text" 
-              value={query}
-              onChange={(e) => handleInputChange(e.target.value)}
-              onFocus={() => { if (query.trim().length >= 2) setDropdownOpen(true); }}
-              onKeyDown={(e) => { if (e.key === 'Enter') triggerSearch(); }}
-              placeholder="Search listings, businesses…" 
-              className="w-full pl-9 pr-3 py-2 border-none rounded text-xs text-gray-800 outline-none placeholder:text-gray-400 bg-white"
-            />
-          </div>
+              <div className="relative flex-1">
+                <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none animate-none" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2.5" style={{ zIndex: 10 }}>
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input 
+                  type="text" 
+                  value={query}
+                  onChange={(e) => handleInputChange(e.target.value)}
+                  onFocus={() => { if (query.trim().length >= 2) setDropdownOpen(true); }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') triggerSearch(); }}
+                  placeholder="Search listings, businesses…" 
+                  className="w-full pr-3 py-2 border-none rounded text-xs text-gray-800 outline-none placeholder:text-gray-400 bg-white"
+                  style={{ paddingLeft: '36px' }}
+                />
+              </div>
           
           <button 
             onClick={triggerSearch}
@@ -346,7 +390,7 @@ function SearchContent() {
                         return (
                           <div 
                             key={b.id} 
-                            onClick={() => { setQuery(''); setDropdownOpen(false); openProfile(b.id); }}
+                            onClick={() => { setQuery(''); setDropdownOpen(false); openProfile(b); }}
                             className="flex items-center gap-2.5 p-2 px-3 border-b border-gray-50 hover:bg-[#e8f5ee] cursor-pointer"
                           >
                             {b.dp_url ? (
@@ -456,7 +500,7 @@ function SearchContent() {
                 return (
                   <div 
                     key={b.id} 
-                    onClick={() => openProfile(b.id)}
+                    onClick={() => openProfile(b)}
                     className="bg-white rounded-lg border border-[#ddd] p-3 flex gap-2.5 hover:bg-[#e8f5ee] cursor-pointer transition-colors"
                   >
                     <div className="w-12 h-12 rounded-full overflow-hidden border border-gray-150 shrink-0 bg-gray-50 flex items-center justify-center">
@@ -522,7 +566,7 @@ function SearchContent() {
                     return (
                       <div 
                         key={b.id} 
-                        onClick={() => openProfile(b.id)}
+                        onClick={() => openProfile(b)}
                         className="flex gap-2.5 p-2.5 bg-white border-b border-gray-100 hover:bg-[#e8f5ee] cursor-pointer items-start"
                       >
                         {b.dp_url ? (
@@ -580,18 +624,15 @@ function SearchContent() {
 
       {/* Bottom Nav */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex z-50 pb-safe">
-        <button 
-          onClick={() => { 
-            if (currentArea) router.push(`/town/${currentArea.slug}`);
-            else router.push('/');
-          }}
-          className="flex-1 flex flex-col items-center justify-center py-2 px-1 text-[9px] gap-0.5 bg-none border-none text-gray-400"
+        <Link 
+          href={currentArea ? `/${currentArea.slug}` : '/'}
+          className="flex-1 flex flex-col items-center justify-center py-2 px-1 text-[9px] gap-0.5 text-gray-400 hover:text-[#1a5c3a] transition-colors"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
           </svg>
           Home
-        </button>
+        </Link>
         <button 
           onClick={() => { setActiveTab('search'); }}
           className={`flex-1 flex flex-col items-center justify-center py-2 px-1 text-[9px] gap-0.5 bg-none border-none ${activeTab === 'search' ? 'text-[#1a5c3a]' : 'text-gray-400'}`}

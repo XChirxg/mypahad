@@ -19,8 +19,10 @@ interface Business {
   is_approved: boolean;
   is_active: boolean;
   category_id: string | null;
+  username?: string | null;
   areas?: {
     name: string;
+    slug?: string;
   };
 }
 
@@ -96,7 +98,7 @@ export default function ListingDetail({ listing, relatedListings }: ListingDetai
       area_id: areaId,
       event_type: 'listing_click',
       session_id: savedSid
-    }).then();
+    }).then(null, err => console.warn('Analytics failed:', err));
 
     // Load initial quantities from cart
     loadInitialQuantitiesFromCart();
@@ -374,7 +376,7 @@ export default function ListingDetail({ listing, relatedListings }: ListingDetai
       area_id: areaId,
       event_type: 'whatsapp_click',
       session_id: sid
-    }).then();
+    }).then(null, err => console.warn('Analytics failed:', err));
   };
 
   const renderMiniCart = () => {
@@ -447,11 +449,25 @@ export default function ListingDetail({ listing, relatedListings }: ListingDetai
     }
   };
 
+  const generateSlug = (text: string) => {
+    return text
+      .toString()
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^\w\-]+/g, '')
+      .replace(/\-\-+/g, '-')
+      .replace(/^-+/, '')
+      .replace(/-+$/, '');
+  };
+
   const buyMoreFromSeller = () => {
     saveToCart(quantities);
+    const areaSlug = biz?.areas?.slug || '';
+    const bizUsername = biz?.username || 'shop';
     localStorage.setItem('mp_view_biz', bizId);
-    localStorage.setItem('mp_prof_back', `/listing/${listing.id}`);
-    router.push(`/profile/${bizId}`);
+    localStorage.setItem('mp_prof_back', `/${bizUsername}-${generateSlug(listing.name)}-in-${areaSlug}`);
+    router.push(`/${bizUsername}-in-${areaSlug}`);
   };
 
   const getSelectedCount = () => {
@@ -655,9 +671,11 @@ export default function ListingDetail({ listing, relatedListings }: ListingDetai
           <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2">Sold By</div>
           <div 
             onClick={() => {
+              const areaSlug = biz?.areas?.slug || '';
+              const bizUsername = biz?.username || 'shop';
               localStorage.setItem('mp_view_biz', bizId);
-              localStorage.setItem('mp_prof_back', `/listing/${listing.id}`);
-              router.push(`/profile/${bizId}`);
+              localStorage.setItem('mp_prof_back', `/${bizUsername}-${generateSlug(listing.name)}-in-${areaSlug}`);
+              router.push(`/${bizUsername}-in-${areaSlug}`);
             }}
             className="flex items-center gap-3 p-2 rounded-lg border border-[#ddd] hover:bg-[#e8f5ee] cursor-pointer transition-colors"
           >
@@ -687,9 +705,23 @@ export default function ListingDetail({ listing, relatedListings }: ListingDetai
             {relatedListings.map(r => (
               <div 
                 key={r.id} 
-                onClick={() => {
+                onClick={async () => {
                   localStorage.setItem('mp_view_lst', JSON.stringify(r));
-                  router.push(`/listing/${r.id}`);
+                  const areaSlug = biz?.areas?.slug || '';
+                  let rUsername = r.businesses?.username;
+                  let rAreaSlug = r.businesses?.areas?.slug;
+                  if (!rUsername || !rAreaSlug) {
+                    const { data: b } = await supabase
+                      .from('businesses')
+                      .select('username, areas(slug)')
+                      .eq('id', r.business_id)
+                      .single();
+                    if (b) {
+                      rUsername = b.username || 'shop';
+                      rAreaSlug = (b.areas as any)?.slug || areaSlug;
+                    }
+                  }
+                  router.push(`/${rUsername || 'shop'}-${generateSlug(r.name)}-in-${rAreaSlug || areaSlug}`);
                 }}
                 className="shrink-0 w-[110px] bg-white rounded-lg border border-[#ddd] overflow-hidden cursor-pointer shadow-sm hover:border-[#1a5c3a] transition-colors"
               >

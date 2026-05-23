@@ -31,6 +31,7 @@ interface Business {
   hearts: number;
   description: string | null;
   address: string | null;
+  username?: string | null;
   areas?: {
     name: string;
     slug: string;
@@ -136,7 +137,7 @@ export default function ProfileDetail({ business, photos, initialListings, initi
       business_id: bizId,
       event_type: 'business_view',
       session_id: savedSid
-    }).then();
+    }).then(null, err => console.warn('Analytics failed:', err));
 
     // Infinite scroll listener
     window.addEventListener('scroll', handleScroll);
@@ -227,7 +228,9 @@ export default function ProfileDetail({ business, photos, initialListings, initi
   };
 
   const shareProfile = async () => {
-    const url = `${window.location.origin}/profile/${bizId}`;
+    const areaSlug = business.areas?.slug || 'town';
+    const bizUsername = business.username || 'shop';
+    const url = `${window.location.origin}/${bizUsername}-in-${areaSlug}`;
     if (navigator.share) {
       try {
         await navigator.share({
@@ -299,7 +302,7 @@ export default function ProfileDetail({ business, photos, initialListings, initi
       business_id: bizId,
       event_type: 'whatsapp_click',
       session_id: sid
-    }).then();
+    }).then(null, err => console.warn('Analytics failed:', err));
 
     const waNum = fmtWa(business.whatsapp);
     if (waNum) {
@@ -399,10 +402,24 @@ export default function ProfileDetail({ business, photos, initialListings, initi
     return parseFloat(cleaned) || 0;
   };
 
+  const generateSlug = (text: string) => {
+    return text
+      .toString()
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^\w\-]+/g, '')
+      .replace(/\-\-+/g, '-')
+      .replace(/^-+/, '')
+      .replace(/-+$/, '');
+  };
+
   const openProductDetail = (l: Listing) => {
+    const areaSlug = business.areas?.slug || 'town';
+    const bizUsername = business.username || 'shop';
     localStorage.setItem('mp_view_lst', JSON.stringify(l));
-    localStorage.setItem('mp_lst_back', `/profile/${bizId}`);
-    router.push(`/listing/${l.id}`);
+    localStorage.setItem('mp_lst_back', `/${bizUsername}-in-${areaSlug}`);
+    router.push(`/${bizUsername}-${generateSlug(l.name)}-in-${areaSlug}`);
   };
 
   const claimed = business.user_id !== null;
@@ -563,7 +580,7 @@ export default function ProfileDetail({ business, photos, initialListings, initi
                   area_id: business.area_id,
                   event_type: 'whatsapp_click',
                   session_id: sid
-                }).then();
+                }).then(null, err => console.warn('Analytics failed:', err));
               }}
               className="bg-[#25d366] text-white border-none py-1.5 px-3 rounded text-xs font-semibold flex items-center gap-1 hover:bg-[#20ba5a] transition-colors"
             >
@@ -730,7 +747,7 @@ export default function ProfileDetail({ business, photos, initialListings, initi
         )}
 
         <nav className="flex z-50 pb-safe">
-          <Link href={`/town/${business.areas?.slug || 'home'}`} className="flex-1 flex flex-col items-center justify-center py-1 text-[9px] gap-0.5 text-gray-400 bg-none border-none">
+          <Link href={`/${business.areas?.slug || ''}`} className="flex-1 flex flex-col items-center justify-center py-1 text-[9px] gap-0.5 text-gray-400 bg-none border-none">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
             </svg>

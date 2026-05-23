@@ -20,7 +20,9 @@ interface TownSelectorProps {
 export default function TownSelector({ initialAreas }: TownSelectorProps) {
   const router = useRouter();
   
-  const [states, setStates] = useState<string[]>([]);
+  const [states, setStates] = useState<string[]>(() => {
+    return Array.from(new Set(initialAreas.map(r => r.state).filter(Boolean))).sort();
+  });
   const [selectedState, setSelectedState] = useState('');
   const [districts, setDistricts] = useState<string[]>([]);
   const [selectedDistrict, setSelectedDistrict] = useState('');
@@ -41,19 +43,19 @@ export default function TownSelector({ initialAreas }: TownSelectorProps) {
 
   // 1. Initialize states
   useEffect(() => {
-    const uniqueStates = Array.from(new Set(initialAreas.map(r => r.state).filter(Boolean))).sort();
-    setStates(uniqueStates);
-    
     // Check local storage for last visited area
     try {
       const saved = localStorage.getItem('mp_area');
       if (saved) {
         const areaObj = JSON.parse(saved) as Area;
         if (areaObj && areaObj.name) {
-          setLocHint(`Last visited: ${areaObj.name}`);
-          setLocCallback(() => () => preselectArea(areaObj));
+          const fullArea = initialAreas.find(a => a.id === areaObj.id || a.slug === areaObj.slug);
+          const areaToUse = fullArea || areaObj;
+
+          setLocHint(`Last visited: ${areaToUse.name}`);
+          setLocCallback(() => () => preselectArea(areaToUse));
           // Proactively preselect
-          preselectArea(areaObj);
+          preselectArea(areaToUse);
         }
       }
     } catch (e) {}
@@ -90,7 +92,7 @@ export default function TownSelector({ initialAreas }: TownSelectorProps) {
           const areaObj = biz.areas as unknown as Area;
           localStorage.setItem('mp_area', JSON.stringify(areaObj));
           localStorage.setItem('mp_open_biz', biz.id);
-          router.push(`/town/${areaObj.slug}`);
+          router.push(`/${areaObj.slug}`);
         } else {
           triggerToast('Profile not found: @' + username);
         }
@@ -172,20 +174,27 @@ export default function TownSelector({ initialAreas }: TownSelectorProps) {
   };
 
   const preselectArea = (area: Area) => {
-    setSelectedState(area.state);
+    if (!area) return;
+
+    // Ensure we have a complete area object from initialAreas
+    const fullArea = initialAreas.find(a => a.id === area.id || a.slug === area.slug) || area;
+
+    setSelectedState(fullArea.state || '');
     
     // districts
-    const stateDistricts = Array.from(new Set(
-      initialAreas.filter(r => r.state === area.state).map(r => r.district).filter(Boolean)
-    )).sort();
+    const stateDistricts = fullArea.state ? Array.from(new Set(
+      initialAreas.filter(r => r.state === fullArea.state).map(r => r.district).filter(Boolean)
+    )).sort() : [];
     setDistricts(stateDistricts);
-    setSelectedDistrict(area.district);
+    setSelectedDistrict(fullArea.district || '');
     
     // towns
-    const districtTowns = initialAreas.filter(r => r.state === area.state && r.district === area.district);
+    const districtTowns = (fullArea.state && fullArea.district) ? initialAreas.filter(
+      r => r.state === fullArea.state && r.district === fullArea.district
+    ) : [];
     setTowns(districtTowns);
-    setSelectedTownId(area.id);
-    setSelectedArea(area);
+    setSelectedTownId(fullArea.id || '');
+    setSelectedArea(fullArea);
   };
 
   // Dropdown changes
@@ -230,7 +239,7 @@ export default function TownSelector({ initialAreas }: TownSelectorProps) {
   const enterTown = () => {
     if (!selectedArea) return;
     localStorage.setItem('mp_area', JSON.stringify(selectedArea));
-    router.push(`/town/${selectedArea.slug}`);
+    router.push(`/${selectedArea.slug}`);
   };
 
   return (

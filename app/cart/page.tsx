@@ -64,7 +64,7 @@ export default function CartPage() {
     try {
       const area = JSON.parse(localStorage.getItem('mp_area') || '{}');
       if (area && area.slug) {
-        router.push(`/town/${area.slug}`);
+        router.push(`/${area.slug}`);
       } else {
         router.push('/');
       }
@@ -133,7 +133,7 @@ export default function CartPage() {
       business_id: bid,
       event_type: 'whatsapp_click',
       session_id: sid
-    }).then();
+    }).then(null, err => console.warn('Analytics failed:', err));
 
     const waNum = fmtWa(bizData.whatsapp);
     if (waNum) {

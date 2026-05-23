@@ -3,6 +3,18 @@ import { supabase } from '@/lib/supabase';
 
 export const revalidate = 86400; // Regenerate sitemap at most once a day
 
+function generateSlug(text: string) {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://mypahad.in'; // Replace with actual production domain
 
@@ -34,7 +46,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   try {
-    // 1. Fetch active towns
+    // 1. Fetch active towns (areas)
     const { data: areas } = await supabase
       .from('areas')
       .select('slug')
@@ -43,7 +55,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (areas) {
       areas.forEach(area => {
         sitemapEntries.push({
-          url: `${baseUrl}/town/${area.slug}`,
+          url: `${baseUrl}/${area.slug}`,
           lastModified: new Date(),
           changeFrequency: 'daily',
           priority: 0.8,
@@ -54,36 +66,50 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // 2. Fetch approved active businesses
     const { data: businesses } = await supabase
       .from('businesses')
-      .select('id')
+      .select('username, areas(slug)')
       .eq('is_approved', true)
       .eq('is_active', true);
 
     if (businesses) {
-      businesses.forEach(biz => {
-        sitemapEntries.push({
-          url: `${baseUrl}/profile/${biz.id}`,
-          lastModified: new Date(),
-          changeFrequency: 'weekly',
-          priority: 0.7,
-        });
+      businesses.forEach(b => {
+        const biz = b as any;
+        const area = biz?.areas;
+        const areaSlug = (Array.isArray(area) ? area[0]?.slug : area?.slug) || '';
+        const username = biz.username || 'shop';
+        if (areaSlug) {
+          sitemapEntries.push({
+            url: `${baseUrl}/${username}-in-${areaSlug}`,
+            lastModified: new Date(),
+            changeFrequency: 'weekly',
+            priority: 0.7,
+          });
+        }
       });
     }
 
     // 3. Fetch active available listings
     const { data: listings } = await supabase
       .from('listings')
-      .select('id, created_at')
+      .select('name, created_at, businesses(username, areas(slug))')
       .eq('is_active', true)
       .eq('is_available', true);
 
     if (listings) {
       listings.forEach(l => {
-        sitemapEntries.push({
-          url: `${baseUrl}/listing/${l.id}`,
-          lastModified: l.created_at ? new Date(l.created_at) : new Date(),
-          changeFrequency: 'weekly',
-          priority: 0.9,
-        });
+        const item = l as any;
+        const biz = item?.businesses;
+        const area = biz?.areas;
+        const areaSlug = (Array.isArray(area) ? area[0]?.slug : area?.slug) || '';
+        const username = (Array.isArray(biz) ? biz[0]?.username : biz?.username) || 'shop';
+        if (areaSlug) {
+          const prodSlug = generateSlug(item.name);
+          sitemapEntries.push({
+            url: `${baseUrl}/${username}-${prodSlug}-in-${areaSlug}`,
+            lastModified: item.created_at ? new Date(item.created_at) : new Date(),
+            changeFrequency: 'weekly',
+            priority: 0.9,
+          });
+        }
       });
     }
   } catch (e) {
