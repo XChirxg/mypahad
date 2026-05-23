@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { supabase, generateUUID } from '@/lib/supabase';
+import { supabase, generateUUID, triggerNavigationStart } from '@/lib/supabase';
 
 interface CartItem {
   id: string;
@@ -63,12 +63,14 @@ export default function CartPage() {
     // Navigate back to listing page if present, else back to area town home
     try {
       const area = JSON.parse(localStorage.getItem('mp_area') || '{}');
+      triggerNavigationStart();
       if (area && area.slug) {
         router.push(`/${area.slug}`);
       } else {
         router.push('/');
       }
     } catch (e) {
+      triggerNavigationStart();
       router.push('/');
     }
   };

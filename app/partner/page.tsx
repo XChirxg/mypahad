@@ -26,6 +26,7 @@ interface Business {
   dp_url: string | null;
   area_id: string | null;
   category_id: string | null;
+  draft_category?: string | null;
   type: string;
   instagram: string | null;
   facebook: string | null;
@@ -295,12 +296,29 @@ export default function PartnerPage() {
       return;
     }
 
+    // Resolve category or draft
+    let resolvedCategoryId: string | null = null;
+    let resolvedDraftCategory: string | null = null;
+
+    if (regCategoryName.trim()) {
+      const trimmedName = regCategoryName.trim();
+      const exactMatch = categories.find(
+        c => c.name.toLowerCase() === trimmedName.toLowerCase()
+      );
+      if (exactMatch) {
+        resolvedCategoryId = exactMatch.id;
+      } else {
+        resolvedDraftCategory = trimmedName;
+      }
+    }
+
     const { error: insErr } = await supabase.from('businesses').insert({
       user_id: uid,
       area_id: regAreaId,
       business_name: regName,
       username: regUsername || null,
-      category_id: regCategoryId || null,
+      category_id: resolvedCategoryId,
+      draft_category: resolvedDraftCategory,
       type: regType,
       whatsapp: regWa,
       phone: regPh || null,

@@ -41,6 +41,24 @@ export default function TopLoader() {
   }, [visible, progress]);
 
   useEffect(() => {
+    let safetyTimer: NodeJS.Timeout;
+    if (visible) {
+      safetyTimer = setTimeout(() => {
+        setVisible(false);
+        setProgress(0);
+      }, 8000); // 8 seconds safety fallback
+    }
+    return () => {
+      if (safetyTimer) clearTimeout(safetyTimer);
+    };
+  }, [visible]);
+
+  useEffect(() => {
+    const handleStart = () => {
+      setVisible(true);
+      setProgress(10);
+    };
+
     const handleAnchorClick = (e: MouseEvent) => {
       let target = e.target as HTMLElement | null;
       while (target && target.tagName !== 'A') {
@@ -73,16 +91,20 @@ export default function TopLoader() {
             currentUrl.pathname !== targetUrl.pathname ||
             currentUrl.search !== targetUrl.search
           ) {
-            setVisible(true);
-            setProgress(10);
+            handleStart();
           }
         }
       }
     };
 
     document.addEventListener('click', handleAnchorClick);
+    window.addEventListener('nextjs-navigation-start', handleStart);
+    window.addEventListener('popstate', handleStart);
+
     return () => {
       document.removeEventListener('click', handleAnchorClick);
+      window.removeEventListener('nextjs-navigation-start', handleStart);
+      window.removeEventListener('popstate', handleStart);
     };
   }, []);
 
@@ -99,3 +121,4 @@ export default function TopLoader() {
     </div>
   );
 }
+

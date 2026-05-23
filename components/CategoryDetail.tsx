@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
+import { supabase, triggerNavigationStart } from '@/lib/supabase';
+import SponsoredListingCard from '@/components/SponsoredListingCard';
 
 interface Area {
   id: string;
@@ -59,6 +60,28 @@ export default function CategoryDetail({
   const [hasNext, setHasNext] = useState(initialHasNext);
   const [loading, setLoading] = useState(false);
   const [bizUsernames, setBizUsernames] = useState<Record<string, string>>(usernames);
+
+  const [sponsoredAds, setSponsoredAds] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchSponsored = async () => {
+      const now = new Date().toISOString();
+      const { data, error } = await supabase
+        .from('ads')
+        .select('*, listings(*, businesses(business_name, username))')
+        .eq('area_id', area.id)
+        .eq('is_active', true)
+        .in('ad_type', ['sponsored_product', 'sponsored_service'])
+        .lte('starts_at', now)
+        .gte('ends_at', now);
+
+      if (!error && data) {
+        const filtered = data.filter(ad => ad.listings && ad.listings.category_id === category.id);
+        setSponsoredAds(filtered);
+      }
+    };
+    fetchSponsored();
+  }, [area.id, category.id]);
 
   // Randomization seed
   const [sessionSeed, setSessionSeed] = useState('');
@@ -202,7 +225,7 @@ export default function CategoryDetail({
         <span className="text-white text-sm font-bold truncate max-w-[200px]">
           {category.name}
         </span>
-        <Link href={`/${area.slug}`} className="text-white text-xs font-semibold opacity-80 hover:opacity-100 transition-opacity">
+        <Link href={`/${area.slug}`} className="text-white text-xs font-semibold opacity-80 hover:opacity-100 transition-opacity" style={{ color: 'white' }}>
           MyPahad
         </Link>
       </div>
@@ -258,6 +281,22 @@ export default function CategoryDetail({
             Services
           </button>
         </div>
+
+        {/* Sponsored Products Section */}
+        {sponsoredAds.length > 0 && (
+          <div className="p-3 pb-0">
+            <div className="text-[11px] font-bold text-amber-600 uppercase tracking-widest mb-2 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+              Sponsored Products
+            </div>
+            <div className="grid grid-cols-3 gap-1.5 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 mb-2">
+              {sponsoredAds.map(ad => (
+                <SponsoredListingCard key={ad.id} ad={ad} areaSlug={area.slug} />
+              ))}
+            </div>
+            <div className="h-[1px] bg-gray-200 my-2"></div>
+          </div>
+        )}
 
         {/* Listings Grid */}
         {loading && listings.length === 0 ? (

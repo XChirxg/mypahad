@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { supabase, generateUUID } from '@/lib/supabase';
+import { supabase, generateUUID, triggerNavigationStart } from '@/lib/supabase';
+import AdBanner from '@/components/AdBanner';
 
 interface Area {
   id: string;
@@ -26,7 +27,9 @@ interface Ad {
   area_id: string;
   ad_type: string;
   image_url: string | null;
+  link_url: string | null;
   listing_id: string | null;
+  business_id: string | null;
 }
 
 interface Listing {
@@ -38,6 +41,7 @@ interface Listing {
   listing_type: string | null;
   business_id: string;
   qty_label: string | null;
+  ad_id?: string;
   businesses?: {
     business_name: string;
   };
@@ -78,7 +82,7 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
 
   // Stories, Ads, Cart
   const [stories] = useState<Business[]>(initialStories);
-  const [bannerAd, setBannerAd] = useState<Ad | null>(null);
+  const [bannerAds, setBannerAds] = useState<Ad[]>([]);
   const [sponsoredListings, setSponsoredListings] = useState<Listing[]>([]);
   const [cartCount, setCartCount] = useState(0);
   const [isSeller, setIsSeller] = useState(false);
@@ -131,8 +135,8 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
     checkPartnerStatus();
 
     // Parse Ads
-    const banner = initialAds.find(a => a.ad_type === 'banner') || null;
-    setBannerAd(banner);
+    const banners = initialAds.filter(a => a.ad_type === 'banner');
+    setBannerAds(banners);
     
     const sponsoredAds = initialAds.filter(a => a.ad_type === 'sponsored_product' || a.ad_type === 'sponsored_service');
     fetchSponsoredListings(sponsoredAds);
@@ -176,6 +180,7 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
 
   const fetchSponsoredListings = async (ads: Ad[]) => {
     const list: Listing[] = [];
+    const savedSid = localStorage.getItem('mp_sid') || '';
     for (const ad of ads) {
       if (ad.listing_id) {
         const { data: l } = await supabase
@@ -183,10 +188,34 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
           .select('*, businesses(business_name)')
           .eq('id', ad.listing_id)
           .single();
-        if (l) list.push(l as unknown as Listing);
+        if (l) {
+          list.push({ ...l, ad_id: ad.id } as unknown as Listing);
+          
+          // Log impression
+          supabase.from('analytics').insert({
+            area_id: area.id,
+            event_type: 'ad_impression',
+            ad_id: ad.id,
+            session_id: savedSid
+          }).then(null, err => console.warn('Ad impression logging failed:', err));
+        }
       }
     }
     setSponsoredListings(list);
+  };
+
+  const openSponsoredProduct = async (l: Listing) => {
+    triggerNavigationStart();
+    const savedSid = localStorage.getItem('mp_sid') || '';
+    if (l.ad_id) {
+      await supabase.from('analytics').insert({
+        area_id: area.id,
+        event_type: 'ad_click',
+        ad_id: l.ad_id,
+        session_id: savedSid
+      }).then(null, err => console.warn('Ad click logging failed:', err));
+    }
+    openProduct(l);
   };
 
   const loadCategoryBoxes = async () => {
@@ -291,6 +320,7 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
   };
 
   const openProduct = async (l: Listing) => {
+    triggerNavigationStart();
     localStorage.setItem('mp_view_lst', JSON.stringify(l));
     localStorage.setItem('mp_lst_back', `/${area.slug}`);
 
@@ -351,7 +381,7 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
       {/* Top Navbar */}
       <div className="bg-[#1a5c3a] p-2 px-3 flex items-center justify-between gap-2 sticky top-0 z-50 shadow-sm">
         <div className="flex items-center gap-2">
-          <Link href="/" className="text-white text-base font-bold tracking-tight">MyPahad</Link>
+          <Link href="/" className="text-white text-base font-bold tracking-tight" style={{ color: 'white' }}>MyPahad</Link>
           <span className="text-[10px] text-white/60 border-l border-white/20 pl-2 leading-none">
             {area.name}
           </span>
@@ -380,6 +410,17 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
         </div>
       </div>
 
+      {/* Search Input Redirect */}
+      <div className="p-2 px-2.5 bg-white border-b border-[#ddd]">
+        <Link href="/search" className="flex items-center bg-gray-100 rounded border border-[#ddd] p-2 px-3">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2.5" className="mr-2">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <span className="text-[11px] text-gray-500 flex-1">Search products, services, or shops...</span>
+        </Link>
+      </div>
+
       {/* Stories list */}
       {stories.length > 0 && (
         <div className="flex gap-2.5 overflow-x-auto p-2 px-3 bg-white border-b border-[#ddd] no-scrollbar">
@@ -387,6 +428,7 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
             <div 
               key={b.id} 
               onClick={() => {
+                triggerNavigationStart();
                 localStorage.setItem('mp_view_biz', b.id);
                 localStorage.setItem('mp_prof_back', `/${area.slug}`);
                 router.push(`/${b.username || 'shop'}-in-${area.slug}`);
@@ -410,28 +452,9 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
         </div>
       )}
 
-      {/* Search Input Redirect */}
-      <div className="p-2 px-2.5 bg-white border-b border-[#ddd]">
-        <Link href="/search" className="flex items-center bg-gray-100 rounded border border-[#ddd] p-2 px-3">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2.5" className="mr-2">
-            <circle cx="11" cy="11" r="8"/>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-          </svg>
-          <span className="text-[11px] text-gray-500 flex-1">Search products, services, or shops...</span>
-        </Link>
-      </div>
-
       {/* Banner Ad */}
-      {bannerAd?.image_url && (
-        <div className="m-2 mx-2.5 rounded-lg overflow-hidden">
-          {bannerAd.listing_id ? (
-            <div onClick={() => openProduct({ id: bannerAd.listing_id } as Listing)} className="cursor-pointer">
-              <img src={bannerAd.image_url} alt="Banner Ad" className="w-full aspect-[16/9] object-cover" />
-            </div>
-          ) : (
-            <img src={bannerAd.image_url} alt="Banner Ad" className="w-full aspect-[16/9] object-cover" />
-          )}
-        </div>
+      {bannerAds.length > 0 && (
+        <AdBanner ad={bannerAds[0]} areaSlug={area.slug} />
       )}
 
       {/* Filter Chips */}
@@ -466,7 +489,7 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
             {sponsoredListings.map(l => (
               <div 
                 key={l.id} 
-                onClick={() => openProduct(l)}
+                onClick={() => openSponsoredProduct(l)}
                 className="shrink-0 w-[100px] bg-[#f8f8f8] rounded border border-[#ddd] overflow-hidden cursor-pointer"
               >
                 {l.image_url ? (
@@ -493,15 +516,20 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
       {/* Main Listings View */}
       {!detailCat ? (
         <div className="flex flex-col">
-          {categories.slice(categoryPage * PS, (categoryPage + 1) * PS).map(cat => {
+          {categories.slice(categoryPage * PS, (categoryPage + 1) * PS).map((cat, index) => {
             const listings = categoryListings[cat.id] || [];
             const isLoading = loadingCategoryListings[cat.id];
             
             // If it's loaded and empty, hide the box entirely
             if (!isLoading && listings.length === 0) return null;
             
+            const adIndex = (index + 1) % bannerAds.length;
+            const adToShow = bannerAds[adIndex];
+            const shouldShowAd = bannerAds.length > 0;
+
             return (
-              <div key={cat.id} className="bg-white border-b border-[#ddd] p-2 py-3 mb-2.5">
+              <div key={cat.id}>
+                <div className="bg-white border-b border-[#ddd] p-2 py-3 mb-2.5">
                 <div className="flex items-center justify-between px-1 mb-2">
                   <span className="text-[12px] font-bold text-gray-800">{cat.name}</span>
                 </div>
@@ -561,6 +589,10 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
                       </div>
                     )}
                   </>
+                )}
+                </div>
+                {shouldShowAd && (
+                  <AdBanner ad={adToShow} areaSlug={area.slug} />
                 )}
               </div>
             );

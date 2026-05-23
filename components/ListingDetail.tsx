@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { supabase, generateUUID } from '@/lib/supabase';
+import { supabase, generateUUID, triggerNavigationStart } from '@/lib/supabase';
 
 interface Area {
   id: string;
@@ -462,6 +462,7 @@ export default function ListingDetail({ listing, relatedListings }: ListingDetai
   };
 
   const buyMoreFromSeller = () => {
+    triggerNavigationStart();
     saveToCart(quantities);
     const areaSlug = biz?.areas?.slug || '';
     const bizUsername = biz?.username || 'shop';
@@ -499,7 +500,7 @@ export default function ListingDetail({ listing, relatedListings }: ListingDetai
       {/* Top Navbar */}
       <div className="bg-[#1a5c3a] p-2 px-3 flex items-center justify-between gap-2 sticky top-0 z-50 shadow-sm">
         <div className="flex items-center gap-2">
-          <Link href={typeof window !== 'undefined' ? localStorage.getItem('mp_lst_back') || '/' : '/'} className="text-white text-base font-bold tracking-tight">
+          <Link href={typeof window !== 'undefined' ? localStorage.getItem('mp_lst_back') || '/' : '/'} className="text-white text-base font-bold tracking-tight" style={{ color: 'white' }}>
             MyPahad
           </Link>
           {townName && (
@@ -671,6 +672,7 @@ export default function ListingDetail({ listing, relatedListings }: ListingDetai
           <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2">Sold By</div>
           <div 
             onClick={() => {
+              triggerNavigationStart();
               const areaSlug = biz?.areas?.slug || '';
               const bizUsername = biz?.username || 'shop';
               localStorage.setItem('mp_view_biz', bizId);
@@ -706,6 +708,7 @@ export default function ListingDetail({ listing, relatedListings }: ListingDetai
               <div 
                 key={r.id} 
                 onClick={async () => {
+                  triggerNavigationStart();
                   localStorage.setItem('mp_view_lst', JSON.stringify(r));
                   const areaSlug = biz?.areas?.slug || '';
                   let rUsername = r.businesses?.username;
@@ -778,7 +781,12 @@ export default function ListingDetail({ listing, relatedListings }: ListingDetai
                   <div className="flex items-center gap-1 min-w-0">
                     <button onClick={(e) => removeMiniCartItem(e, item.id, item.variant)} className="text-[#e05a2b] font-bold text-sm px-1">&times;</button>
                     <span 
-                      onClick={() => { if (item.id !== listing.id) router.push(`/listing/${item.id}`); }}
+                      onClick={() => {
+                        if (item.id !== listing.id) {
+                          triggerNavigationStart();
+                          router.push(`/listing/${item.id}`);
+                        }
+                      }}
                       className={`truncate font-medium ${item.id !== listing.id ? 'underline text-[#1a5c3a] cursor-pointer' : 'text-gray-700'}`}
                     >
                       {item.name} {item.variant ? `(${item.variant})` : ''}

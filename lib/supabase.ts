@@ -14,4 +14,8 @@ export const generateUUID = () => {
     return v.toString(16);
   });
 };
-
+export const triggerNavigationStart = () => {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('nextjs-navigation-start'));
+  }
+};

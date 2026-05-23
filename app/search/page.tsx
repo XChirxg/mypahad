@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
+import { supabase, triggerNavigationStart } from '@/lib/supabase';
 
 interface Area {
   id: string;
@@ -270,6 +270,7 @@ function SearchContent() {
     const bizUsername = l.businesses?.username || 'shop';
     const areaSlug = l.businesses?.areas?.slug || currentArea?.slug || 'town';
     const prodSlug = generateSlug(l.name);
+    triggerNavigationStart();
     router.push(`/${bizUsername}-${prodSlug}-in-${areaSlug}`);
   };
 
@@ -278,6 +279,7 @@ function SearchContent() {
     localStorage.setItem('mp_prof_back', '/search');
     const areaSlug = b.areas?.slug || currentArea?.slug || 'town';
     const bizUsername = b.username || 'shop';
+    triggerNavigationStart();
     router.push(`/${bizUsername}-in-${areaSlug}`);
   };
 

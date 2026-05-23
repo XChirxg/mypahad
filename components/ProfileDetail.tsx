@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { supabase, generateUUID } from '@/lib/supabase';
+import { supabase, generateUUID, triggerNavigationStart } from '@/lib/supabase';
 
 interface Area {
   id: string;
@@ -415,6 +415,7 @@ export default function ProfileDetail({ business, photos, initialListings, initi
   };
 
   const openProductDetail = (l: Listing) => {
+    triggerNavigationStart();
     const areaSlug = business.areas?.slug || 'town';
     const bizUsername = business.username || 'shop';
     localStorage.setItem('mp_view_lst', JSON.stringify(l));
@@ -478,7 +479,7 @@ export default function ProfileDetail({ business, photos, initialListings, initi
       {/* Top Navbar */}
       <div className="bg-[#1a5c3a] p-2 px-3 flex items-center justify-between gap-2 sticky top-0 z-50 shadow-sm">
         <div className="flex items-center gap-2">
-          <Link href={typeof window !== 'undefined' ? localStorage.getItem('mp_prof_back') || '/' : '/'} className="text-white text-base font-bold tracking-tight">
+          <Link href={typeof window !== 'undefined' ? localStorage.getItem('mp_prof_back') || '/' : '/'} className="text-white text-base font-bold tracking-tight" style={{ color: 'white' }}>
             MyPahad
           </Link>
           {townName && (
@@ -733,7 +734,10 @@ export default function ProfileDetail({ business, photos, initialListings, initi
                   <div className="flex items-center gap-1 min-w-0">
                     <button onClick={(e) => removeMiniCartItem(e, item.id, item.variant)} className="text-[#e05a2b] font-bold text-sm px-1">&times;</button>
                     <span 
-                      onClick={() => router.push(`/listing/${item.id}`)}
+                      onClick={() => {
+                        triggerNavigationStart();
+                        router.push(`/listing/${item.id}`);
+                      }}
                       className="truncate font-medium underline text-[#1a5c3a] cursor-pointer"
                     >
                       {item.name} {item.variant ? `(${item.variant})` : ''}
