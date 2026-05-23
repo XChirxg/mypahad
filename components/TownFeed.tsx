@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
+import { supabase, generateUUID } from '@/lib/supabase';
 
 interface Area {
   id: string;
@@ -89,10 +89,9 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
     // Save current town to localStorage to maintain backward compatibility
     localStorage.setItem('mp_area', JSON.stringify(area));
 
-    // Session id
     let savedSid = localStorage.getItem('mp_sid');
     if (!savedSid) {
-      savedSid = crypto.randomUUID();
+      savedSid = generateUUID();
       localStorage.setItem('mp_sid', savedSid);
     }
     setSid(savedSid);

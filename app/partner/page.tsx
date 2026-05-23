@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
+import { supabase, generateUUID } from '@/lib/supabase';
 
 interface Area {
   id: string;
@@ -495,7 +495,7 @@ export default function PartnerPage() {
         // Create new
         const { error } = await supabase
           .from('listings')
-          .insert({ ...payload, id: crypto.randomUUID() });
+          .insert({ ...payload, id: generateUUID() });
         if (error) throw error;
         triggerToast('Item added!');
       }

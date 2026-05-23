@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
+import { supabase, generateUUID } from '@/lib/supabase';
 
 interface CartItem {
   id: string;
@@ -35,7 +35,7 @@ export default function CartPage() {
     // Generate/get Session ID
     let savedSid = localStorage.getItem('mp_sid');
     if (!savedSid) {
-      savedSid = crypto.randomUUID();
+      savedSid = generateUUID();
       localStorage.setItem('mp_sid', savedSid);
     }
     setSid(savedSid);

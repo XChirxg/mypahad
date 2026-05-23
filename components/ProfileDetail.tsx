@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
+import { supabase, generateUUID } from '@/lib/supabase';
 
 interface Area {
   id: string;
@@ -109,7 +109,7 @@ export default function ProfileDetail({ business, photos, initialListings, initi
     // Generate/get Session ID
     let savedSid = localStorage.getItem('mp_sid');
     if (!savedSid) {
-      savedSid = crypto.randomUUID();
+      savedSid = generateUUID();
       localStorage.setItem('mp_sid', savedSid);
     }
     setSid(savedSid);
