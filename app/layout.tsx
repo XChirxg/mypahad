@@ -3,6 +3,7 @@ import { DM_Sans } from "next/font/google";
 import "./globals.css";
 import TopLoader from "@/components/TopLoader";
 import { Suspense } from "react";
+import Script from "next/script";
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
@@ -25,6 +26,21 @@ export default function RootLayout({
       lang="en"
       className={`${dmSans.variable} h-full antialiased`}
     >
+      <head>
+        {/* Google tag (gtag.js) */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-QC4K73RYBE"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-QC4K73RYBE');
+          `}
+        </Script>
+      </head>
       <body className="min-h-full flex flex-col">
         <Suspense fallback={null}>
           <TopLoader />
