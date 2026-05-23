@@ -1135,3 +1135,39 @@ label {
   font-style: italic;
   opacity: 0.75;
 }
+
+/* COLOR OVERRIDES FOR GREEN/ORANGE BUTTONS AND LINKS */
+button.text-white,
+a.text-white,
+.text-white {
+  color: #ffffff !important;
+}
+
+button.text-white svg,
+a.text-white svg,
+.text-white svg {
+  color: #ffffff !important;
+}
+
+button.bg-\[\#1a5c3a\],
+a.bg-\[\#1a5c3a\],
+button.bg-\[\#e05a2b\],
+a.bg-\[\#e05a2b\],
+button[class*="bg-[#1a5c3a]"],
+a[class*="bg-[#1a5c3a]"],
+button[class*="bg-[#e05a2b]"],
+a[class*="bg-[#e05a2b]"] {
+  color: #ffffff !important;
+}
+
+button.bg-\[\#1a5c3a\] svg,
+a.bg-\[\#1a5c3a\] svg,
+button.bg-\[\#e05a2b\] svg,
+a.bg-\[\#e05a2b\] svg,
+button[class*="bg-[#1a5c3a]"] svg,
+a[class*="bg-[#1a5c3a]"] svg,
+button[class*="bg-[#e05a2b]"] svg,
+a[class*="bg-[#e05a2b]"] svg {
+  color: #ffffff !important;
+}
+
