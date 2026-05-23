@@ -30,6 +30,8 @@ interface Ad {
   link_url: string | null;
   listing_id: string | null;
   business_id: string | null;
+  slot_number?: string | null;
+  category_id?: string | null;
 }
 
 interface Listing {
@@ -453,8 +455,8 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
       )}
 
       {/* Banner Ad */}
-      {bannerAds.length > 0 && (
-        <AdBanner ad={bannerAds[0]} areaSlug={area.slug} />
+      {bannerAds.find(a => a.slot_number === 'banner_top') && (
+        <AdBanner ad={bannerAds.find(a => a.slot_number === 'banner_top')!} areaSlug={area.slug} />
       )}
 
       {/* Filter Chips */}
@@ -523,9 +525,8 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
             // If it's loaded and empty, hide the box entirely
             if (!isLoading && listings.length === 0) return null;
             
-            const adIndex = (index + 1) % bannerAds.length;
-            const adToShow = bannerAds[adIndex];
-            const shouldShowAd = bannerAds.length > 0;
+            const adToShow = bannerAds.find(a => a.slot_number === `banner${index + 1}`);
+            const shouldShowAd = !!adToShow;
 
             return (
               <div key={cat.id}>

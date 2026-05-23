@@ -349,7 +349,7 @@ export default function TownSelector({ initialAreas }: TownSelectorProps) {
 
         {/* Direct Links */}
         <div className="border border-gray-200 rounded-lg overflow-hidden flex flex-col">
-          <Link href="/partner" className="flex items-center gap-3 p-3 bg-white hover:bg-gray-50 border-b border-gray-100 transition-colors">
+          <a href="https://mypahad.in/partner" className="flex items-center gap-3 p-3 bg-white hover:bg-gray-50 border-b border-gray-100 transition-colors">
             <div className="w-8 h-8 rounded-lg bg-[#fff5eb] flex items-center justify-center shrink-0">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c05c00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="2" y="7" width="20" height="14" rx="2"/>
@@ -361,23 +361,7 @@ export default function TownSelector({ initialAreas }: TownSelectorProps) {
               <div className="text-[10px] text-gray-400 mt-0.5">Free listing for local shops & services</div>
             </div>
             <span className="text-gray-400 text-lg">›</span>
-          </Link>
-        </div>
-      </div>
-
-      {/* SEO Town Links for Crawler Indexing */}
-      <div className="mt-12 w-full max-w-[600px] border-t border-gray-100 pt-6">
-        <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest text-center mb-4">Explore Pahadi Towns</h2>
-        <div className="flex flex-wrap justify-center gap-2">
-          {initialAreas.map(town => (
-            <Link 
-              key={town.id} 
-              href={`/town/${town.slug}`} 
-              className="text-xs px-3 py-1.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-full text-gray-600 transition-colors hover:text-[#1a5c3a]"
-            >
-              {town.name}
-            </Link>
-          ))}
+          </a>
         </div>
       </div>
     </div>

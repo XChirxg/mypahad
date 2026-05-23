@@ -76,7 +76,10 @@ export default function CategoryDetail({
         .gte('ends_at', now);
 
       if (!error && data) {
-        const filtered = data.filter(ad => ad.listings && ad.listings.category_id === category.id);
+        const filtered = data.filter(ad => 
+          ad.category_id === category.id || 
+          (ad.listings && ad.listings.category_id === category.id)
+        );
         setSponsoredAds(filtered);
       }
     };

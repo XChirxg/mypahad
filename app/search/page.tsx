@@ -351,8 +351,15 @@ function SearchContent() {
     <div className="min-h-screen bg-[#f0f0ee] pb-[60px] font-sans">
       {/* Top Search Bar */}
       <div className="bg-[#1a5c3a] p-2 px-3 sticky top-0 z-50">
-        <div className="text-white text-xs font-bold mb-1.5 opacity-85">Search</div>
-        <div className="flex gap-1.5 items-center relative" ref={dropdownRef}>
+        {activeTab === 'businesses' ? (
+          <div className="flex justify-between items-center py-1 px-1">
+            <span className="text-white text-sm font-bold tracking-wide">mypahad.in</span>
+            <span className="text-white text-[9px] opacity-75">Local Directory</span>
+          </div>
+        ) : (
+          <>
+            <div className="text-white text-xs font-bold mb-1.5 opacity-85">Search</div>
+            <div className="flex gap-1.5 items-center relative" ref={dropdownRef}>
               <div className="relative flex-1">
                 <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none animate-none" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2.5" style={{ zIndex: 10 }}>
                   <circle cx="11" cy="11" r="8"/>
@@ -369,104 +376,106 @@ function SearchContent() {
                   style={{ paddingLeft: '36px' }}
                 />
               </div>
-          
-          <button 
-            onClick={triggerSearch}
-            className="shrink-0 h-8.5 px-3.5 bg-[#e05a2b] text-white border-none rounded text-xs font-bold active:scale-[0.98] transition-all"
-          >
-            Search
-          </button>
+              
+              <button 
+                onClick={triggerSearch}
+                className="shrink-0 h-8.5 px-3.5 bg-[#e05a2b] text-white border-none rounded text-xs font-bold active:scale-[0.98] transition-all"
+              >
+                Search
+              </button>
 
-          {/* Quick results Dropdown */}
-          {dropdownOpen && (
-            <div className="absolute top-[calc(100%+4px)] left-0 right-0 bg-white border border-[#ddd] rounded shadow-lg max-h-[260px] overflow-y-auto z-50 flex flex-col">
-              {quickBizResults.length === 0 && quickLstResults.length === 0 ? (
-                <div className="p-3 text-[11px] text-gray-400">No quick results — press Search</div>
-              ) : (
-                <>
-                  {quickBizResults.length > 0 && (
+              {/* Quick results Dropdown */}
+              {dropdownOpen && (
+                <div className="absolute top-[calc(100%+4px)] left-0 right-0 bg-white border border-[#ddd] rounded shadow-lg max-h-[260px] overflow-y-auto z-50 flex flex-col">
+                  {quickBizResults.length === 0 && quickLstResults.length === 0 ? (
+                    <div className="p-3 text-[11px] text-gray-400">No quick results — press Search</div>
+                  ) : (
                     <>
-                      <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest p-1.5 px-3.5 bg-gray-50 border-b border-gray-100">Businesses</div>
-                      {quickBizResults.map(b => {
-                        const claimed = b.user_id !== null;
-                        return (
-                          <div 
-                            key={b.id} 
-                            onClick={() => { setQuery(''); setDropdownOpen(false); openProfile(b); }}
-                            className="flex items-center gap-2.5 p-2 px-3 border-b border-gray-50 hover:bg-[#e8f5ee] cursor-pointer"
-                          >
-                            {b.dp_url ? (
-                              <img src={b.dp_url} className="w-8 h-8 rounded object-cover shrink-0 bg-gray-50" alt="" />
-                            ) : (
-                              <div className="w-8 h-8 rounded bg-[#e8f5ee] flex items-center justify-center shrink-0">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" strokeWidth="1.5">
-                                  <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
-                                </svg>
-                              </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <div className="text-[11px] font-semibold text-gray-800 truncate flex items-center gap-1">
-                                {claimed && (
-                                  <span className="inline-flex items-center justify-center bg-[#0095f6] text-white w-3 h-3 rounded-full shrink-0">
-                                    <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4">
-                                      <polyline points="20 6 9 17 4 12"/>
+                      {quickBizResults.length > 0 && (
+                        <>
+                          <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest p-1.5 px-3.5 bg-gray-50 border-b border-gray-100">Businesses</div>
+                          {quickBizResults.map(b => {
+                            const claimed = b.user_id !== null;
+                            return (
+                              <div 
+                                key={b.id} 
+                                onClick={() => { setQuery(''); setDropdownOpen(false); openProfile(b); }}
+                                className="flex items-center gap-2.5 p-2 px-3 border-b border-gray-50 hover:bg-[#e8f5ee] cursor-pointer"
+                              >
+                                {b.dp_url ? (
+                                  <img src={b.dp_url} className="w-8 h-8 rounded object-cover shrink-0 bg-gray-50" alt="" />
+                                ) : (
+                                  <div className="w-8 h-8 rounded bg-[#e8f5ee] flex items-center justify-center shrink-0">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" strokeWidth="1.5">
+                                      <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
                                     </svg>
-                                  </span>
+                                  </div>
                                 )}
-                                {b.business_name}
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-[11px] font-semibold text-gray-800 truncate flex items-center gap-1">
+                                    {claimed && (
+                                      <span className="inline-flex items-center justify-center bg-[#0095f6] text-white w-3 h-3 rounded-full shrink-0">
+                                        <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4">
+                                          <polyline points="20 6 9 17 4 12"/>
+                                        </svg>
+                                      </span>
+                                    )}
+                                    {b.business_name}
+                                  </div>
+                                  <div className="text-[9px] text-gray-400">{b.categories?.name}</div>
+                                </div>
+                                <span className="text-[9px] bg-gray-100 text-gray-400 px-1 py-0.5 rounded">Shop</span>
                               </div>
-                              <div className="text-[9px] text-gray-400">{b.categories?.name}</div>
-                            </div>
-                            <span className="text-[9px] bg-gray-100 text-gray-400 px-1 py-0.5 rounded">Shop</span>
-                          </div>
-                        );
-                      })}
-                    </>
-                  )}
+                            );
+                          })}
+                        </>
+                      )}
 
-                  {quickLstResults.length > 0 && (
-                    <>
-                      <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest p-1.5 px-3.5 bg-gray-50 border-b border-gray-100">Listings</div>
-                      {quickLstResults.map(l => (
-                        <div 
-                          key={l.id} 
-                          onClick={() => { setQuery(''); setDropdownOpen(false); openProduct(l); }}
-                          className="flex items-center gap-2.5 p-2 px-3 border-b border-gray-50 hover:bg-[#e8f5ee] cursor-pointer"
-                        >
-                          {l.image_url ? (
-                            <img src={l.image_url} className="w-8 h-8 rounded object-cover shrink-0 bg-gray-50" alt="" />
-                          ) : (
-                            <div className="w-8 h-8 rounded bg-[#e8f5ee] flex items-center justify-center shrink-0">
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" strokeWidth="1.5">
-                                <rect x="3" y="3" width="18" height="18" rx="2"/>
-                              </svg>
+                      {quickLstResults.length > 0 && (
+                        <>
+                          <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest p-1.5 px-3.5 bg-gray-50 border-b border-gray-100">Listings</div>
+                          {quickLstResults.map(l => (
+                            <div 
+                              key={l.id} 
+                              onClick={() => { setQuery(''); setDropdownOpen(false); openProduct(l); }}
+                              className="flex items-center gap-2.5 p-2 px-3 border-b border-gray-50 hover:bg-[#e8f5ee] cursor-pointer"
+                            >
+                              {l.image_url ? (
+                                <img src={l.image_url} className="w-8 h-8 rounded object-cover shrink-0 bg-gray-50" alt="" />
+                              ) : (
+                                <div className="w-8 h-8 rounded bg-[#e8f5ee] flex items-center justify-center shrink-0">
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" strokeWidth="1.5">
+                                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                  </svg>
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <div className="text-[11px] font-semibold text-gray-800 truncate">{l.name}</div>
+                                <div className="text-[9px] text-gray-400 truncate">{l.businesses?.business_name}</div>
+                              </div>
+                              {(l.discount_price || l.price) && (
+                                <span className="text-[9px] bg-[#e8f5ee] text-[#1a5c3a] px-1.5 py-0.5 rounded font-semibold shrink-0">
+                                  {l.discount_price || l.price}
+                                </span>
+                              )}
                             </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <div className="text-[11px] font-semibold text-gray-800 truncate">{l.name}</div>
-                            <div className="text-[9px] text-gray-400 truncate">{l.businesses?.business_name}</div>
-                          </div>
-                          {(l.discount_price || l.price) && (
-                            <span className="text-[9px] bg-[#e8f5ee] text-[#1a5c3a] px-1.5 py-0.5 rounded font-semibold shrink-0">
-                              {l.discount_price || l.price}
-                            </span>
-                          )}
-                        </div>
-                      ))}
+                          ))}
+                        </>
+                      )}
+                      
+                      <div 
+                        onClick={triggerSearch} 
+                        className="p-2.5 text-[11px] text-[#1a5c3a] font-bold text-center border-t border-gray-100 hover:bg-gray-50 cursor-pointer"
+                      >
+                        See all results →
+                      </div>
                     </>
                   )}
-                  
-                  <div 
-                    onClick={triggerSearch} 
-                    className="p-2.5 text-[11px] text-[#1a5c3a] font-bold text-center border-t border-gray-100 hover:bg-gray-50 cursor-pointer"
-                  >
-                    See all results →
-                  </div>
-                </>
+                </div>
               )}
             </div>
-          )}
-        </div>
+          </>
+        )}
       </div>
 
       {/* Main Content Area */}
@@ -492,6 +501,15 @@ function SearchContent() {
               All Businesses in {currentArea?.name}
             </div>
           </div>
+          
+          <a 
+            href="https://mypahad.in/partner" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="block w-full bg-[#1a5c3a] text-white text-center py-2.5 px-4 rounded-lg text-xs font-bold mb-3 hover:bg-[#154c30] transition-colors shadow-sm"
+          >
+            Register as Business
+          </a>
           
           <div className="flex flex-col gap-2">
             {bizResults.length === 0 ? (
