@@ -5,6 +5,7 @@ import TownFeed from '@/components/TownFeed';
 import ProfileDetail from '@/components/ProfileDetail';
 import ListingDetail from '@/components/ListingDetail';
 import CategoryDetail from '@/components/CategoryDetail';
+import PostDetail from '@/components/PostDetail';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -47,6 +48,47 @@ async function resolveSlug(slug: string) {
 
     if (!area) return null;
 
+    // Check if left matches a blog post slug (e.g. zicafe-post-grand-opening)
+    if (left.toLowerCase().includes('-post-')) {
+      const postIndex = left.toLowerCase().indexOf('-post-');
+      const bizUsername = left.substring(0, postIndex);
+      const postSlug = left.substring(postIndex + 6); // skip "-post-"
+
+      const { data: business } = await supabase
+        .from('businesses')
+        .select('*, areas(name, slug), categories(name)')
+        .eq('username', bizUsername.toLowerCase())
+        .eq('area_id', area.id)
+        .eq('is_active', true)
+        .single();
+
+      if (business) {
+        const { data: post } = await supabase
+          .from('posts')
+          .select('*')
+          .eq('business_id', business.id)
+          .eq('slug', postSlug.toLowerCase())
+          .single();
+
+        if (post) {
+          const { data: listings } = await supabase
+            .from('listings')
+            .select('id, name, price, discount_price, image_url')
+            .eq('business_id', business.id)
+            .eq('is_available', true)
+            .limit(3);
+
+          return {
+            type: 'post' as const,
+            post,
+            business,
+            listings: listings || [],
+          };
+        }
+      }
+      return null;
+    }
+
     // A1. Check if left matches exactly a business username in this area
     const { data: business } = await supabase
       .from('businesses')
@@ -70,14 +112,23 @@ async function resolveSlug(slug: string) {
         .select('*')
         .eq('business_id', business.id)
         .eq('is_available', true)
+        .order('is_featured', { ascending: false })
         .order('created_at', { ascending: false })
         .range(0, 8);
+
+      // Fetch blog posts
+      const { data: posts } = await supabase
+        .from('posts')
+        .select('*')
+        .eq('business_id', business.id)
+        .order('created_at', { ascending: false });
 
       return {
         type: 'profile' as const,
         business,
         photos: photos || [],
         listings: listings || [],
+        posts: posts || [],
       };
     }
 
@@ -372,6 +423,24 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     };
   }
 
+  if (result.type === 'post') {
+    const { post, business } = result;
+    const cleanDescription = post.content
+      ? post.content.replace(/<[^>]*>/g, '').substring(0, 160)
+      : `Read post "${post.title}" by ${business.business_name} on MyPahad.`;
+
+    return {
+      title: `${post.title} | ${business.business_name} | MyPahad`,
+      description: cleanDescription,
+      keywords: post.tags || undefined,
+      openGraph: {
+        title: `${post.title} | ${business.business_name} | MyPahad`,
+        description: cleanDescription,
+        images: (post.media_type === 'image' && post.media_url) ? [post.media_url] : [],
+      },
+    };
+  }
+
   return {};
 }
 
@@ -404,6 +473,7 @@ export default async function SlugPage({ params }: PageProps) {
         business={result.business}
         photos={result.photos}
         initialListings={result.listings}
+        initialPosts={result.posts}
         initialHearts={false}
       />
     );
@@ -458,6 +528,16 @@ export default async function SlugPage({ params }: PageProps) {
         />
         <ListingDetail listing={result.listing} relatedListings={result.relatedListings} />
       </>
+    );
+  }
+
+  if (result.type === 'post') {
+    return (
+      <PostDetail
+        post={result.post}
+        business={result.business}
+        listings={result.listings}
+      />
     );
   }
 

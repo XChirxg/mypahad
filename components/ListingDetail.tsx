@@ -61,6 +61,7 @@ export default function ListingDetail({ listing, relatedListings }: ListingDetai
   const [bookingTime, setBookingTime] = useState('');
   const [cartItems, setCartItems] = useState<any[]>([]);
   const [cartCount, setCartCount] = useState(0);
+  const [isDescExpanded, setIsDescExpanded] = useState(false);
   
   const [sid, setSid] = useState('');
   const [whatsappHref, setWhatsappHref] = useState('#');
@@ -577,9 +578,23 @@ export default function ListingDetail({ listing, relatedListings }: ListingDetai
 
         {/* Description */}
         {listing.description && (
-          <p className="text-[12px] text-gray-600 leading-relaxed mt-2 pt-2 border-t border-gray-100">
-            {listing.description}
-          </p>
+          <div className="text-[12px] text-gray-600 leading-relaxed mt-2 pt-2 border-t border-gray-100">
+            <span>
+              {isDescExpanded
+                ? listing.description
+                : listing.description.length > 180
+                ? listing.description.substring(0, 180) + '...'
+                : listing.description}
+            </span>
+            {listing.description.length > 180 && (
+              <button
+                onClick={() => setIsDescExpanded(!isDescExpanded)}
+                className="text-[#1a5c3a] font-bold ml-1 text-[11px] hover:underline bg-none border-none p-0 cursor-pointer inline-block"
+              >
+                {isDescExpanded ? 'Read Less' : 'Read More'}
+              </button>
+            )}
+          </div>
         )}
 
         {/* Booking required fields */}

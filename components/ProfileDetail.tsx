@@ -59,14 +59,27 @@ interface Listing {
   is_available: boolean;
 }
 
+interface Post {
+  id: string;
+  business_id: string;
+  title: string;
+  slug: string;
+  content: string;
+  media_url: string | null;
+  media_type: string | null;
+  tags: string | null;
+  created_at: string;
+}
+
 interface ProfileDetailProps {
   business: Business;
   photos: BusinessPhoto[];
   initialListings: Listing[];
   initialHearts: boolean;
+  initialPosts?: Post[];
 }
 
-export default function ProfileDetail({ business, photos, initialListings, initialHearts }: ProfileDetailProps) {
+export default function ProfileDetail({ business, photos, initialListings, initialHearts, initialPosts = [] }: ProfileDetailProps) {
   const router = useRouter();
   
   const bizId = business.id;
@@ -75,6 +88,9 @@ export default function ProfileDetail({ business, photos, initialListings, initi
   
   // State
   const [listings, setListings] = useState<Listing[]>(initialListings);
+  const [posts] = useState<Post[]>(initialPosts);
+  const [activeTab, setActiveTab] = useState<'items' | 'posts'>('items');
+  const [isDescExpanded, setIsDescExpanded] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(initialListings.length === 9);
   const [loading, setLoading] = useState(false);
@@ -555,9 +571,23 @@ export default function ProfileDetail({ business, photos, initialListings, initi
 
         {/* Business details description */}
         {business.description && (
-          <p className="text-[11px] text-gray-600 leading-relaxed mt-2.5">
-            {business.description}
-          </p>
+          <div className="text-[11px] text-gray-600 leading-relaxed mt-2.5">
+            <span>
+              {isDescExpanded
+                ? business.description
+                : business.description.length > 180
+                ? business.description.substring(0, 180) + '...'
+                : business.description}
+            </span>
+            {business.description.length > 180 && (
+              <button
+                onClick={() => setIsDescExpanded(!isDescExpanded)}
+                className="text-[#1a5c3a] font-bold ml-1 text-[10px] hover:underline bg-none border-none p-0 cursor-pointer inline-block"
+              >
+                {isDescExpanded ? 'Read Less' : 'Read More'}
+              </button>
+            )}
+          </div>
         )}
 
         {/* Address */}
@@ -641,61 +671,133 @@ export default function ProfileDetail({ business, photos, initialListings, initi
 
       {/* Products list grid */}
       <div className="bg-white border-t-[5px] border-[#f0f0ee]">
-        <div className="flex items-center justify-between p-2.5 px-3.5">
-          <span className="text-[12px] font-bold text-gray-800">Products & Services</span>
+        {/* Tab switcher */}
+        <div className="flex border-b border-gray-200">
+          <button 
+            onClick={() => setActiveTab('items')} 
+            className={`flex-1 text-center py-2.5 text-[11px] font-bold border-b-2 transition-colors ${activeTab === 'items' ? 'border-[#1a5c3a] text-[#1a5c3a]' : 'border-transparent text-gray-400'}`}
+          >
+            Items ({listings.length})
+          </button>
+          <button 
+            onClick={() => setActiveTab('posts')} 
+            className={`flex-1 text-center py-2.5 text-[11px] font-bold border-b-2 transition-colors ${activeTab === 'posts' ? 'border-[#1a5c3a] text-[#1a5c3a]' : 'border-transparent text-gray-400'}`}
+          >
+            Posts ({posts.length})
+          </button>
         </div>
 
-        <div className="grid grid-cols-3 gap-1.5 px-3.5">
-          {listings.map(l => {
-            const orig = parsePriceVal(l.price);
-            const disc = parsePriceVal(l.discount_price);
-            
-            let priceTextHtml = null;
-            if (l.discount_price) {
-              let offPctSpan = null;
-              if (orig > 0 && disc > 0 && orig > disc) {
-                const pct = Math.round(((orig - disc) / orig) * 100);
-                offPctSpan = <span className="bg-[#e05a2b] text-white text-[7px] font-bold px-1 py-0.5 rounded ml-1">{pct}% OFF</span>;
-              }
-              priceTextHtml = (
-                <div className="text-[#e05a2b] text-[10px] font-bold mt-0.5">
-                  {l.discount_price}{' '}
-                  <span className="line-through text-gray-400 text-[8px] font-normal">{l.price}</span>
-                  {offPctSpan}
-                </div>
-              );
-            } else if (l.price) {
-              priceTextHtml = <div className="text-[#1a5c3a] text-[10px] font-bold mt-0.5">{l.price}</div>;
-            }
+        {activeTab === 'items' && (
+          <div className="pt-3">
+            <div className="grid grid-cols-3 gap-1.5 px-3.5">
+              {listings.map(l => {
+                const orig = parsePriceVal(l.price);
+                const disc = parsePriceVal(l.discount_price);
+                
+                let priceTextHtml = null;
+                if (l.discount_price) {
+                  let offPctSpan = null;
+                  if (orig > 0 && disc > 0 && orig > disc) {
+                    const pct = Math.round(((orig - disc) / orig) * 100);
+                    offPctSpan = <span className="bg-[#e05a2b] text-white text-[7px] font-bold px-1 py-0.5 rounded ml-1">{pct}% OFF</span>;
+                  }
+                  priceTextHtml = (
+                    <div className="text-[#e05a2b] text-[10px] font-bold mt-0.5">
+                      {l.discount_price}{' '}
+                      <span className="line-through text-gray-400 text-[8px] font-normal">{l.price}</span>
+                      {offPctSpan}
+                    </div>
+                  );
+                } else if (l.price) {
+                  priceTextHtml = <div className="text-[#1a5c3a] text-[10px] font-bold mt-0.5">{l.price}</div>;
+                }
 
-            return (
-              <div 
-                key={l.id} 
-                onClick={() => openProductDetail(l)}
-                className="bg-white rounded-lg border border-[#ddd] overflow-hidden cursor-pointer shadow-sm"
-              >
-                {l.image_url ? (
-                  <img src={l.image_url} className="w-full aspect-square object-cover" alt={l.name} loading="lazy" />
-                ) : (
-                  <div className="w-full aspect-square bg-[#e8f5ee] flex items-center justify-center">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" strokeWidth="1.5">
-                      <rect x="3" y="3" width="18" height="18" rx="2"/>
-                    </svg>
+                return (
+                  <div 
+                    key={l.id} 
+                    onClick={() => openProductDetail(l)}
+                    className="bg-white rounded-lg border border-[#ddd] overflow-hidden cursor-pointer shadow-sm"
+                  >
+                    {l.image_url ? (
+                      <img src={l.image_url} className="w-full aspect-square object-cover" alt={l.name} loading="lazy" />
+                    ) : (
+                      <div className="w-full aspect-square bg-[#e8f5ee] flex items-center justify-center">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" strokeWidth="1.5">
+                          <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        </svg>
+                      </div>
+                    )}
+                    <div className="p-1 px-1.5">
+                      <div className="text-[10px] font-medium line-clamp-2 leading-tight h-[26px]">
+                        {l.name}
+                      </div>
+                      {priceTextHtml}
+                    </div>
                   </div>
-                )}
-                <div className="p-1 px-1.5">
-                  <div className="text-[10px] font-medium line-clamp-2 leading-tight h-[26px]">
-                    {l.name}
-                  </div>
-                  {priceTextHtml}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                );
+              })}
+            </div>
 
-        {loading && (
-          <div className="text-center py-4 text-[11px] text-gray-500">Loading more items...</div>
+            {loading && (
+              <div className="text-center py-4 text-[11px] text-gray-500">Loading more items...</div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'posts' && (
+          <div className="flex flex-col gap-3 p-3.5 bg-white">
+            {posts.length === 0 ? (
+              <div className="text-center py-8 text-xs text-gray-400 font-medium">No blog posts published yet.</div>
+            ) : (
+              posts.map(post => {
+                const postSlug = post.slug || post.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                const areaSlug = business.areas?.slug || 'town';
+                const bizUsername = business.username || 'shop';
+                const postUrl = `/${bizUsername}-post-${postSlug}-in-${areaSlug}`;
+                
+                const formattedDate = new Date(post.created_at).toLocaleDateString('en-IN', {
+                  day: '2-digit',
+                  month: 'short',
+                  year: 'numeric'
+                });
+
+                // Format YouTube Link
+                const getYouTubeId = (url: string) => {
+                  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+                  const match = url.match(regExp);
+                  return (match && match[2].length === 11) ? match[2] : null;
+                };
+
+                const ytId = post.media_url && post.media_type === 'youtube' ? getYouTubeId(post.media_url) : null;
+                const thumbnail = ytId 
+                  ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`
+                  : post.media_url;
+
+                const cleanText = post.content.replace(/<[^>]*>/g, '');
+                const excerpt = cleanText.length > 120 ? cleanText.substring(0, 120) + '...' : cleanText;
+
+                return (
+                  <Link key={post.id} href={postUrl} className="flex gap-3 p-2.5 rounded-lg border border-gray-150 hover:bg-gray-50 transition-colors">
+                    {thumbnail && (
+                      <div className="w-20 h-20 bg-gray-50 rounded overflow-hidden shrink-0 border border-gray-100">
+                        <img src={thumbnail} className="w-full h-full object-cover" alt="" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0 flex flex-col justify-between">
+                      <div>
+                        <h3 className="text-xs font-bold text-gray-800 line-clamp-2 leading-snug mb-1">{post.title}</h3>
+                        <p className="text-[10px] text-gray-500 line-clamp-2 leading-relaxed">{excerpt}</p>
+                      </div>
+                      <div className="text-[9px] text-gray-400 mt-1 flex items-center justify-between">
+                        <span>{formattedDate}</span>
+                        <span className="text-[#1a5c3a] font-bold">Read More →</span>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })
+            )}
+          </div>
         )}
       </div>
 
