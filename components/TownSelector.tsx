@@ -349,7 +349,7 @@ export default function TownSelector({ initialAreas }: TownSelectorProps) {
 
         {/* Direct Links */}
         <div className="border border-gray-200 rounded-lg overflow-hidden flex flex-col">
-          <a href="https://mypahad.in/partner" className="flex items-center gap-3 p-3 bg-white hover:bg-gray-50 border-b border-gray-100 transition-colors">
+          <a href="https://partner.mypahad.in" className="flex items-center gap-3 p-3 bg-white hover:bg-gray-50 border-b border-gray-100 transition-colors">
             <div className="w-8 h-8 rounded-lg bg-[#fff5eb] flex items-center justify-center shrink-0">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c05c00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="2" y="7" width="20" height="14" rx="2"/>

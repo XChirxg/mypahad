@@ -393,9 +393,9 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
             Change
           </Link>
           {isSeller && (
-            <Link href="/partner" className="bg-white/15 text-white border-none px-2 py-1 rounded text-[11px] font-semibold hover:bg-white/25 transition-colors">
+            <a href="https://partner.mypahad.in" className="bg-white/15 text-white border-none px-2 py-1 rounded text-[11px] font-semibold hover:bg-white/25 transition-colors">
               Dashboard
-            </Link>
+            </a>
           )}
           <Link href="/cart" className="relative flex items-center justify-center p-1 text-white">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

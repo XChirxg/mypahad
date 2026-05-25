@@ -618,7 +618,7 @@ export default function ProfileDetail({ business, photos, initialListings, initi
       {!claimed && (
         <div className="p-2.5 px-3 text-[9.5px] text-gray-400 text-center bg-white border-b border-gray-100 leading-normal">
           Directory compilation from public records; actual products & pricing may vary. Is this your business?{' '}
-          <Link href="/partner" className="text-[#1a5c3a] font-semibold underline">Claim profile</Link> or{' '}
+          <a href="https://partner.mypahad.in" className="text-[#1a5c3a] font-semibold underline">Claim profile</a> or{' '}
           <a href="https://wa.me/917876602575?text=Please%20remove%20my%20listing" className="text-[#1a5c3a] font-semibold underline" target="_blank" rel="noreferrer">
             request removal
           </a>.

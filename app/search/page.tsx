@@ -503,7 +503,7 @@ function SearchContent() {
           </div>
           
           <a 
-            href="https://mypahad.in/partner" 
+            href="https://partner.mypahad.in" 
             target="_blank" 
             rel="noopener noreferrer" 
             className="block w-full bg-[#1a5c3a] text-white text-center py-2.5 px-4 rounded-lg text-xs font-bold mb-3 hover:bg-[#154c30] transition-colors shadow-sm"
