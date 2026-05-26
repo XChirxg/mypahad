@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { supabase, triggerNavigationStart } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
+import { getOptimizedImageUrl } from '@/lib/cloudinary';
 
 interface Ad {
   id: string;
@@ -90,7 +91,7 @@ export default function AdBanner({ ad, areaSlug }: AdBannerProps) {
       className="m-2 mx-2.5 rounded-lg overflow-hidden cursor-pointer shadow-sm border border-gray-200 transition-all hover:opacity-95"
     >
       <img 
-        src={ad.image_url} 
+        src={getOptimizedImageUrl(ad.image_url, 'ad')} 
         alt={ad.title || "Banner Ad"} 
         className="w-full aspect-[16/9] object-cover" 
         loading="lazy"

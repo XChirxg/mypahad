@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase, generateUUID, triggerNavigationStart } from '@/lib/supabase';
+import { getOptimizedImageUrl } from '@/lib/cloudinary';
 import AdBanner from '@/components/AdBanner';
 
 interface Area {
@@ -439,7 +440,7 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
             >
               <div className="w-10 h-10 rounded-full border-2 border-[#1a5c3a] overflow-hidden mx-auto mb-1 flex items-center justify-center bg-gray-50">
                 {b.dp_url ? (
-                  <img src={b.dp_url} className="w-full h-full object-cover" alt={b.business_name} loading="lazy" />
+                  <img src={getOptimizedImageUrl(b.dp_url, 'dp')} className="w-full h-full object-cover" alt={b.business_name} loading="lazy" />
                 ) : (
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" strokeWidth="1.5">
                     <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
@@ -495,7 +496,7 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
                 className="shrink-0 w-[100px] bg-[#f8f8f8] rounded border border-[#ddd] overflow-hidden cursor-pointer"
               >
                 {l.image_url ? (
-                  <img src={l.image_url} className="w-full h-[70px] object-cover bg-gray-100" alt={l.name} loading="lazy" />
+                  <img src={getOptimizedImageUrl(l.image_url, 'card')} className="w-full h-[70px] object-cover bg-gray-100" alt={l.name} loading="lazy" />
                 ) : (
                   <div className="w-full h-[70px] bg-[#e8f5ee] flex items-center justify-center">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" strokeWidth="1.5">
@@ -557,7 +558,7 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
                           className="bg-white rounded border border-[#ddd] overflow-hidden cursor-pointer"
                         >
                           {l.image_url ? (
-                            <img src={l.image_url} className="w-full aspect-square object-cover" alt={l.name} loading="lazy" />
+                            <img src={getOptimizedImageUrl(l.image_url, 'card')} className="w-full aspect-square object-cover" alt={l.name} loading="lazy" />
                           ) : (
                             <div className="w-full aspect-square bg-[#e8f5ee] flex items-center justify-center">
                               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" strokeWidth="1.5">
@@ -656,7 +657,7 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
                       className="bg-white rounded border border-[#ddd] overflow-hidden cursor-pointer"
                     >
                       {l.image_url ? (
-                        <img src={l.image_url} className="w-full aspect-square object-cover" alt={l.name} loading="lazy" />
+                        <img src={getOptimizedImageUrl(l.image_url, 'card')} className="w-full aspect-square object-cover" alt={l.name} loading="lazy" />
                       ) : (
                         <div className="w-full aspect-square bg-[#e8f5ee] flex items-center justify-center">
                           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" strokeWidth="1.5">

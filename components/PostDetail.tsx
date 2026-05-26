@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { getOptimizedImageUrl } from '@/lib/cloudinary';
 
 interface Business {
   id: string;
@@ -125,7 +126,7 @@ export default function PostDetail({ post, business, listings }: PostDetailProps
           </div>
         ) : showImage ? (
           <div className="relative w-full aspect-[4/3] bg-gray-100">
-            <img src={post.media_url!} alt={post.title} className="w-full h-full object-cover" />
+            <img src={getOptimizedImageUrl(post.media_url!, 'large')} alt={post.title} className="w-full h-full object-cover" />
           </div>
         ) : null}
 
@@ -135,7 +136,7 @@ export default function PostDetail({ post, business, listings }: PostDetailProps
             <Link href={bizProfileUrl} className="flex items-center gap-2 group">
               <div className="w-6 h-6 rounded-full overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center shrink-0">
                 {business.dp_url ? (
-                  <img src={business.dp_url} className="w-full h-full object-cover" alt="" />
+                  <img src={getOptimizedImageUrl(business.dp_url, 'dp')} className="w-full h-full object-cover" alt="" />
                 ) : (
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" strokeWidth="1.5">
                     <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
@@ -194,7 +195,7 @@ export default function PostDetail({ post, business, listings }: PostDetailProps
                 className="bg-white rounded border border-gray-200 overflow-hidden cursor-pointer shadow-sm"
               >
                 {l.image_url ? (
-                  <img src={l.image_url} className="w-full aspect-square object-cover" alt={l.name} loading="lazy" />
+                  <img src={getOptimizedImageUrl(l.image_url, 'card')} className="w-full aspect-square object-cover" alt={l.name} loading="lazy" />
                 ) : (
                   <div className="w-full aspect-square bg-[#e8f5ee] flex items-center justify-center">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" strokeWidth="1.5">

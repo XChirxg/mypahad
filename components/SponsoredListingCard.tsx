@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { getOptimizedImageUrl } from '@/lib/cloudinary';
 
 interface Listing {
   id: string;
@@ -127,7 +128,7 @@ export default function SponsoredListingCard({ ad, areaSlug }: SponsoredListingC
       <div>
         {listing.image_url ? (
           <img
-            src={listing.image_url}
+            src={getOptimizedImageUrl(listing.image_url, 'card')}
             className="w-full aspect-square object-cover bg-gray-50"
             alt={listing.name}
             loading="lazy"

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase, generateUUID, triggerNavigationStart } from '@/lib/supabase';
+import { getOptimizedImageUrl } from '@/lib/cloudinary';
 
 interface Area {
   id: string;
@@ -468,7 +469,7 @@ export default function ProfileDetail({ business, photos, initialListings, initi
           {/* Stories Header details */}
           <div className="absolute top-7 left-3 right-3 flex items-center justify-between z-[1010] text-white">
             <div className="flex items-center gap-2">
-              {business.dp_url && <img src={business.dp_url} className="w-8 h-8 rounded-full object-cover border border-white/50" />}
+              {business.dp_url && <img src={getOptimizedImageUrl(business.dp_url, 'dp')} className="w-8 h-8 rounded-full object-cover border border-white/50" />}
               <div className="flex flex-col">
                 <span className="text-xs font-bold shadow-sm">{bizName}</span>
                 <span className="text-[10px] text-gray-300 truncate max-w-[200px]">
@@ -487,7 +488,7 @@ export default function ProfileDetail({ business, photos, initialListings, initi
             onTouchStart={handleStoryPress}
             onTouchEnd={(e) => handleStoryRelease(e.changedTouches[0].clientX)}
           >
-            <img src={photos[activeStoryIdx].url} className="max-w-full max-h-full object-contain" alt="Story" />
+            <img src={getOptimizedImageUrl(photos[activeStoryIdx].url, 'large')} className="max-w-full max-h-full object-contain" alt="Story" />
           </div>
         </div>
       )}
@@ -531,7 +532,7 @@ export default function ProfileDetail({ business, photos, initialListings, initi
       <div className="bg-white p-3 border-b border-gray-200">
         <div className="flex gap-3.5 items-start">
           {business.dp_url ? (
-            <img src={business.dp_url} className="w-14 h-14 rounded-full border-2 border-[#1a5c3a] object-cover shrink-0" alt={bizName} />
+            <img src={getOptimizedImageUrl(business.dp_url, 'dp')} className="w-14 h-14 rounded-full border-2 border-[#1a5c3a] object-cover shrink-0" alt={bizName} />
           ) : (
             <div className="w-14 h-14 rounded-full border-2 border-[#1a5c3a] bg-gray-50 flex items-center justify-center shrink-0">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" strokeWidth="1.5">
@@ -661,7 +662,7 @@ export default function ProfileDetail({ business, photos, initialListings, initi
           {photos.map((p, i) => (
             <div key={p.id} onClick={() => setActiveStoryIdx(i)} className="flex flex-col items-center gap-1 shrink-0 cursor-pointer">
               <div className="w-12 h-12 rounded-full border-2 border-[#1a5c3a] p-0.5 bg-white overflow-hidden shrink-0">
-                <img src={p.url} className="w-full h-full rounded-full object-cover" alt="Highlight" />
+                <img src={getOptimizedImageUrl(p.url, 'dp')} className="w-full h-full rounded-full object-cover" alt="Highlight" />
               </div>
               <span className="text-[9px] text-gray-600 max-w-[48px] text-center truncate">{p.caption || 'Photo'}</span>
             </div>
@@ -719,7 +720,7 @@ export default function ProfileDetail({ business, photos, initialListings, initi
                     className="bg-white rounded-lg border border-[#ddd] overflow-hidden cursor-pointer shadow-sm"
                   >
                     {l.image_url ? (
-                      <img src={l.image_url} className="w-full aspect-square object-cover" alt={l.name} loading="lazy" />
+                      <img src={getOptimizedImageUrl(l.image_url, 'card')} className="w-full aspect-square object-cover" alt={l.name} loading="lazy" />
                     ) : (
                       <div className="w-full aspect-square bg-[#e8f5ee] flex items-center justify-center">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" strokeWidth="1.5">
@@ -780,7 +781,7 @@ export default function ProfileDetail({ business, photos, initialListings, initi
                   <Link key={post.id} href={postUrl} className="flex gap-3 p-2.5 rounded-lg border border-gray-150 hover:bg-gray-50 transition-colors">
                     {thumbnail && (
                       <div className="w-20 h-20 bg-gray-50 rounded overflow-hidden shrink-0 border border-gray-100">
-                        <img src={thumbnail} className="w-full h-full object-cover" alt="" />
+                        <img src={getOptimizedImageUrl(thumbnail, 'card')} className="w-full h-full object-cover" alt="" />
                       </div>
                     )}
                     <div className="flex-1 min-w-0 flex flex-col justify-between">

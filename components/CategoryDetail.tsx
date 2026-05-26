@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase, triggerNavigationStart } from '@/lib/supabase';
 import SponsoredListingCard from '@/components/SponsoredListingCard';
+import { getOptimizedImageUrl } from '@/lib/cloudinary';
 
 interface Area {
   id: string;
@@ -333,7 +334,7 @@ export default function CategoryDetail({
                 <div>
                   {l.image_url ? (
                     <img
-                      src={l.image_url}
+                      src={getOptimizedImageUrl(l.image_url, 'card')}
                       className="w-full aspect-square object-cover"
                       alt={l.name}
                       loading="lazy"
