@@ -12,22 +12,22 @@ export function getOptimizedImageUrl(
     switch (type) {
       case 'dp':
       case 'avatar':
-        transformation = 'w_150,h_150,c_fill,f_auto,q_auto';
+        transformation = 'w_100,h_100,c_fill,f_auto,q_auto';
         break;
       case 'card':
       case 'thumbnail':
-        transformation = 'w_400,h_400,c_fill,f_auto,q_auto';
+        transformation = 'w_150,h_150,c_fill,f_auto,q_auto';
         break;
       case 'detail':
       case 'large':
-        transformation = 'w_800,c_limit,f_auto,q_auto';
+        transformation = 'w_400,c_limit,f_auto,q_auto';
         break;
       case 'ad':
-        transformation = 'w_800,h_400,c_fill,f_auto,q_auto';
+        transformation = 'w_400,h_200,c_fill,f_auto,q_auto';
         break;
       case 'gallery':
       case 'story':
-        transformation = 'w_1080,c_limit,f_auto,q_auto';
+        transformation = 'w_600,c_limit,f_auto,q_auto';
         break;
       default:
         transformation = 'f_auto,q_auto';
