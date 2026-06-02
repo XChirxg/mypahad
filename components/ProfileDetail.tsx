@@ -61,6 +61,7 @@ interface Listing {
   image_url: string | null;
   description: string | null;
   is_available: boolean;
+  is_featured?: boolean;
 }
 
 interface Post {
@@ -242,6 +243,7 @@ export default function ProfileDetail({ business, photos, initialListings, initi
         .select('*')
         .eq('business_id', bizId)
         .eq('is_available', true)
+        .order('is_featured', { ascending: false })
         .order('created_at', { ascending: false })
         .range(start, end);
 
