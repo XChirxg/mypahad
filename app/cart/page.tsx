@@ -35,7 +35,7 @@ export default function CartPage() {
     try {
       const { data: biz, error } = await supabase
         .from('businesses')
-        .select('id, business_name, whatsapp, delivery_charges, latitude, longitude, areas(name)')
+        .select('id, business_name, whatsapp, delivery_charges, latitude, longitude, dp_url, username, areas(name, slug)')
         .eq('id', bid)
         .single();
       
@@ -56,6 +56,9 @@ export default function CartPage() {
       if (biz.latitude) params.set('biz_latitude', String(biz.latitude));
       if (biz.longitude) params.set('biz_longitude', String(biz.longitude));
       params.set('biz_whatsapp', biz.whatsapp || '');
+      if (biz.dp_url) params.set('biz_dp', biz.dp_url);
+      params.set('biz_username', biz.username || '');
+      params.set('biz_area_slug', (biz.areas as any)?.slug || '');
       params.set('items', JSON.stringify(items));
 
       window.location.href = `https://chat.mypahad.in?${params.toString()}`;

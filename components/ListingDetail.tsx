@@ -280,7 +280,8 @@ export default function ListingDetail({ listing, relatedListings }: ListingDetai
             quantity: q,
             qty_label: qtyLabel,
             booking_date: bookingDate,
-            booking_time: bookingTime
+            booking_time: bookingTime,
+            has_delivery: listing.has_delivery
           });
         }
       });
@@ -295,7 +296,8 @@ export default function ListingDetail({ listing, relatedListings }: ListingDetai
           quantity: q,
           qty_label: qtyLabel,
           booking_date: bookingDate,
-          booking_time: bookingTime
+          booking_time: bookingTime,
+          has_delivery: listing.has_delivery
         });
       }
     }
@@ -836,7 +838,23 @@ export default function ListingDetail({ listing, relatedListings }: ListingDetai
                 let cart: any = {};
                 try { cart = JSON.parse(localStorage.getItem('mp_cart') || '{}'); } catch(e){}
                 const bizData = cart[bizId];
-                const items = bizData?.items || [];
+                let items = bizData?.items || [];
+                
+                if (items.length === 0) {
+                  const qtyLabel = listing.qty_label || 'Quantity';
+                  const priceVal = parsePrice(listing.discount_price || listing.price);
+                  items = [{
+                    id: listing.id,
+                    name: listing.name,
+                    price: priceVal,
+                    variant: null,
+                    quantity: 1,
+                    qty_label: qtyLabel,
+                    booking_date: bookingDate || null,
+                    booking_time: bookingTime || null,
+                    has_delivery: listing.has_delivery
+                  }];
+                }
                 
                 const params = new URLSearchParams();
                 params.set('biz_id', bizId);
@@ -846,6 +864,9 @@ export default function ListingDetail({ listing, relatedListings }: ListingDetai
                 if (biz?.latitude) params.set('biz_latitude', String(biz.latitude));
                 if (biz?.longitude) params.set('biz_longitude', String(biz.longitude));
                 params.set('biz_whatsapp', biz?.whatsapp || '');
+                if (biz?.dp_url) params.set('biz_dp', biz.dp_url);
+                params.set('biz_username', biz?.username || '');
+                params.set('biz_area_slug', biz?.areas?.slug || '');
                 params.set('items', JSON.stringify(items));
                 
                 window.location.href = `https://chat.mypahad.in?${params.toString()}`;

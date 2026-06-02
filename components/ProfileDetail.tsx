@@ -104,6 +104,9 @@ export default function ProfileDetail({ business, photos, initialListings, initi
     if (business.latitude) params.set('biz_latitude', String(business.latitude));
     if (business.longitude) params.set('biz_longitude', String(business.longitude));
     params.set('biz_whatsapp', business.whatsapp || '');
+    if (business.dp_url) params.set('biz_dp', business.dp_url);
+    params.set('biz_username', business.username || '');
+    params.set('biz_area_slug', business.areas?.slug || '');
     params.set('items', JSON.stringify(items));
     return `https://chat.mypahad.in?${params.toString()}`;
   };
