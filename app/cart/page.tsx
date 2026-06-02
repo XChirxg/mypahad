@@ -31,6 +31,40 @@ export default function CartPage() {
   const [bizIds, setBizIds] = useState<string[]>([]);
   const [sid, setSid] = useState('');
 
+  const handleOrderChatClick = async (bid: string) => {
+    try {
+      const { data: biz, error } = await supabase
+        .from('businesses')
+        .select('id, business_name, whatsapp, delivery_charges, latitude, longitude, areas(name)')
+        .eq('id', bid)
+        .single();
+      
+      if (error || !biz) {
+        alert("Failed to load business details. Please try again.");
+        return;
+      }
+
+      const bizData = cart[bid];
+      const items = bizData?.items || [];
+      const townName = (biz.areas as any)?.name || '';
+
+      const params = new URLSearchParams();
+      params.set('biz_id', bid);
+      params.set('biz_name', biz.business_name || bizData.business_name);
+      params.set('biz_town', townName);
+      params.set('biz_delivery_charges', biz.delivery_charges || '0');
+      if (biz.latitude) params.set('biz_latitude', String(biz.latitude));
+      if (biz.longitude) params.set('biz_longitude', String(biz.longitude));
+      params.set('biz_whatsapp', biz.whatsapp || '');
+      params.set('items', JSON.stringify(items));
+
+      window.location.href = `https://chat.mypahad.in?${params.toString()}`;
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong. Please check your internet connection.");
+    }
+  };
+
   useEffect(() => {
     // Generate/get Session ID
     let savedSid = localStorage.getItem('mp_sid');
@@ -231,13 +265,10 @@ export default function CartPage() {
                 <div className="flex gap-2 mt-3.5 items-center">
                   {bizData.whatsapp === 'mypahad' ? (
                     <button 
-                      onClick={() => {
-                        triggerNavigationStart();
-                        router.push(`/chat?biz_id=${bid}`);
-                      }}
+                      onClick={() => handleOrderChatClick(bid)}
                       className="flex-1.8 bg-[#1a5c3a] text-white border-none py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-[#154c30] transition-colors"
                     >
-                      💬 Order Chat
+                      Order Chat
                     </button>
                   ) : (
                     <button 

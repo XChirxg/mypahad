@@ -34,6 +34,8 @@ interface Business {
   address: string | null;
   username?: string | null;
   delivery_charges?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   areas?: {
     name: string;
     slug: string;
@@ -87,6 +89,24 @@ export default function ProfileDetail({ business, photos, initialListings, initi
   const bizId = business.id;
   const bizName = business.business_name;
   const townName = business.areas?.name || '';
+
+  const buildChatUrl = () => {
+    let cart: any = {};
+    try { cart = JSON.parse(localStorage.getItem('mp_cart') || '{}'); } catch(e){}
+    const bizData = cart[bizId];
+    const items = bizData?.items || [];
+    
+    const params = new URLSearchParams();
+    params.set('biz_id', bizId);
+    params.set('biz_name', bizName);
+    params.set('biz_town', townName);
+    params.set('biz_delivery_charges', business.delivery_charges || '0');
+    if (business.latitude) params.set('biz_latitude', String(business.latitude));
+    if (business.longitude) params.set('biz_longitude', String(business.longitude));
+    params.set('biz_whatsapp', business.whatsapp || '');
+    params.set('items', JSON.stringify(items));
+    return `https://chat.mypahad.in?${params.toString()}`;
+  };
   
   // State
   const [listings, setListings] = useState<Listing[]>(initialListings);
@@ -605,16 +625,33 @@ export default function ProfileDetail({ business, photos, initialListings, initi
           </div>
         )}
 
+        {/* Location Coordinates Pin */}
+        {business.latitude && business.longitude && (
+          <div className="text-[10px] text-gray-400 mt-1 flex items-start gap-1">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="mt-0.5 text-[#1a5c3a]">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+            </svg>
+            <a 
+              href={`https://www.google.com/maps/search/?api=1&query=${business.latitude},${business.longitude}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#1a5c3a] hover:underline font-medium"
+            >
+              View on Map ({business.latitude.toFixed(4)}, {business.longitude.toFixed(4)})
+            </a>
+          </div>
+        )}
+
         {/* Actions Button Strip */}
         <div className="flex flex-wrap gap-1.5 mt-3">
           {business.whatsapp === 'mypahad' ? (
             <button
               onClick={() => {
-                router.push(`/chat?biz_id=${bizId}`);
+                window.location.href = buildChatUrl();
               }}
               className="bg-[#1a5c3a] text-white border-none py-1.5 px-3 rounded text-xs font-semibold flex items-center gap-1 hover:bg-[#154a2e] transition-colors"
             >
-              💬 Order Chat
+              Order Chat
             </button>
           ) : waHref ? (
             <a 
@@ -838,10 +875,10 @@ export default function ProfileDetail({ business, photos, initialListings, initi
                 </span>
               </div>
               <button 
-                onClick={sendCartToWhatsApp}
+                onClick={business.whatsapp === 'mypahad' ? () => window.location.href = buildChatUrl() : sendCartToWhatsApp}
                 className="bg-[#1a5c3a] text-white border-none px-2 py-1 rounded text-[10px] font-semibold hover:bg-[#154c30] transition-colors"
               >
-                Send Order
+                {business.whatsapp === 'mypahad' ? 'Order Chat' : 'Send Order'}
               </button>
             </div>
             <div className="flex flex-col gap-1">

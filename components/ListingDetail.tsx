@@ -22,6 +22,8 @@ interface Business {
   category_id: string | null;
   username?: string | null;
   delivery_charges?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   areas?: {
     name: string;
     slug?: string;
@@ -831,12 +833,26 @@ export default function ListingDetail({ listing, relatedListings }: ListingDetai
             <button
               onClick={() => {
                 saveToCart(quantities);
-                triggerNavigationStart();
-                router.push(`/chat?biz_id=${bizId}`);
+                let cart: any = {};
+                try { cart = JSON.parse(localStorage.getItem('mp_cart') || '{}'); } catch(e){}
+                const bizData = cart[bizId];
+                const items = bizData?.items || [];
+                
+                const params = new URLSearchParams();
+                params.set('biz_id', bizId);
+                params.set('biz_name', bizName);
+                params.set('biz_town', townName);
+                params.set('biz_delivery_charges', biz?.delivery_charges || '0');
+                if (biz?.latitude) params.set('biz_latitude', String(biz.latitude));
+                if (biz?.longitude) params.set('biz_longitude', String(biz.longitude));
+                params.set('biz_whatsapp', biz?.whatsapp || '');
+                params.set('items', JSON.stringify(items));
+                
+                window.location.href = `https://chat.mypahad.in?${params.toString()}`;
               }}
               className="flex-1.8 bg-[#1a5c3a] hover:bg-[#154a2e] text-white p-2.5 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5"
             >
-              💬 Order Chat
+              Order Chat
             </button>
           ) : (
             <a 
