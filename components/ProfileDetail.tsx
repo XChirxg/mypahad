@@ -33,6 +33,7 @@ interface Business {
   description: string | null;
   address: string | null;
   username?: string | null;
+  delivery_charges?: string | null;
   areas?: {
     name: string;
     slug: string;
@@ -313,6 +314,9 @@ export default function ProfileDetail({ business, photos, initialListings, initi
       msg += `   - Quantity: ${item.quantity} ${item.qty_label || 'Quantity'}\n`;
       msg += `   - Price: ₹${item.price || '—'}\n\n`;
     });
+    if (business.delivery_charges) {
+      msg += `Delivery Charges: ${business.delivery_charges}\n\n`;
+    }
     msg += `Please confirm availability. Thank you!`;
 
     supabase.from('analytics').insert({
@@ -603,7 +607,16 @@ export default function ProfileDetail({ business, photos, initialListings, initi
 
         {/* Actions Button Strip */}
         <div className="flex flex-wrap gap-1.5 mt-3">
-          {waHref ? (
+          {business.whatsapp === 'mypahad' ? (
+            <button
+              onClick={() => {
+                router.push(`/chat?biz_id=${bizId}`);
+              }}
+              className="bg-[#1a5c3a] text-white border-none py-1.5 px-3 rounded text-xs font-semibold flex items-center gap-1 hover:bg-[#154a2e] transition-colors"
+            >
+              💬 Order Chat
+            </button>
+          ) : waHref ? (
             <a 
               href={waHref} 
               target="_blank" 

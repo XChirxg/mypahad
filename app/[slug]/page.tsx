@@ -179,7 +179,7 @@ async function resolveSlug(slug: string) {
     // A3. Check if it's a listing: left starts with business username + dash (e.g. zicafe-pizza)
     const { data: areaBusinesses } = await supabase
       .from('businesses')
-      .select('id, username, business_name, whatsapp, dp_url, area_id, category_id')
+      .select('id, username, business_name, whatsapp, dp_url, area_id, category_id, latitude, longitude, delivery_charges')
       .eq('area_id', area.id)
       .eq('is_approved', true)
       .eq('is_active', true);
@@ -222,7 +222,7 @@ async function resolveSlug(slug: string) {
               let rel: any[] = [];
               const { data: sameBizData } = await supabase
                 .from('listings')
-                .select('*, businesses(id, business_name, whatsapp, area_id, is_approved, is_active, category_id)')
+                .select('*, businesses(id, business_name, whatsapp, area_id, is_approved, is_active, category_id, latitude, longitude, delivery_charges)')
                 .eq('business_id', biz.id)
                 .eq('is_available', true)
                 .neq('id', matchingListing.id)
@@ -233,7 +233,7 @@ async function resolveSlug(slug: string) {
               if (needed > 0 && biz.category_id) {
                 const { data: otherBizData } = await supabase
                   .from('listings')
-                  .select('*, businesses!inner(id, business_name, whatsapp, area_id, is_approved, is_active, category_id)')
+                  .select('*, businesses!inner(id, business_name, whatsapp, area_id, is_approved, is_active, category_id, latitude, longitude, delivery_charges)')
                   .eq('businesses.category_id', biz.category_id)
                   .neq('business_id', biz.id)
                   .eq('businesses.is_approved', true)
