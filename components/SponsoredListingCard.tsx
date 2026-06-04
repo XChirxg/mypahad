@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getOptimizedImageUrl } from '@/lib/cloudinary';
+import { getListingLink } from '@/lib/dbHelpers';
 
 interface Listing {
   id: string;
@@ -80,7 +81,7 @@ export default function SponsoredListingCard({ ad, areaSlug }: SponsoredListingC
   const getProductHref = () => {
     const bizUsername = listing.businesses?.username || 'shop';
     const prodSlug = generateSlug(listing.name);
-    return `/${bizUsername}-${prodSlug}-in-${areaSlug}`;
+    return getListingLink(bizUsername, prodSlug, areaSlug);
   };
 
   const parsePrice = (p: string | null) => {

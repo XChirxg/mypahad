@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase, generateUUID, triggerNavigationStart } from '@/lib/supabase';
 import { getOptimizedImageUrl } from '@/lib/cloudinary';
+import { getListingLink, getPostLink, getBusinessLink } from '@/lib/dbHelpers';
 
 interface Area {
   id: string;
@@ -272,8 +273,7 @@ export default function ProfileDetail({ business, photos, initialListings, initi
 
   const shareProfile = async () => {
     const areaSlug = business.areas?.slug || 'town';
-    const bizUsername = business.username || 'shop';
-    const url = `${window.location.origin}/${bizUsername}-in-${areaSlug}`;
+    const url = `${window.location.origin}${getBusinessLink(business.username, areaSlug)}`;
     if (navigator.share) {
       try {
         await navigator.share({
@@ -463,10 +463,9 @@ export default function ProfileDetail({ business, photos, initialListings, initi
   const openProductDetail = (l: Listing) => {
     triggerNavigationStart();
     const areaSlug = business.areas?.slug || 'town';
-    const bizUsername = business.username || 'shop';
     localStorage.setItem('mp_view_lst', JSON.stringify(l));
-    localStorage.setItem('mp_lst_back', `/${bizUsername}-in-${areaSlug}`);
-    router.push(`/${bizUsername}-${generateSlug(l.name)}-in-${areaSlug}`);
+    localStorage.setItem('mp_lst_back', getBusinessLink(business.username, areaSlug));
+    router.push(getListingLink(business.username, generateSlug(l.name), areaSlug));
   };
 
   const claimed = business.user_id !== null;
@@ -808,8 +807,7 @@ export default function ProfileDetail({ business, photos, initialListings, initi
               posts.map(post => {
                 const postSlug = post.slug || post.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
                 const areaSlug = business.areas?.slug || 'town';
-                const bizUsername = business.username || 'shop';
-                const postUrl = `/${bizUsername}-post-${postSlug}-in-${areaSlug}`;
+                const postUrl = getPostLink(business.username, postSlug, areaSlug);
                 
                 const formattedDate = new Date(post.created_at).toLocaleDateString('en-IN', {
                   day: '2-digit',
@@ -909,7 +907,7 @@ export default function ProfileDetail({ business, photos, initialListings, initi
         )}
 
         <nav className="flex z-50 pb-safe">
-          <Link href={`/${business.areas?.slug || ''}`} className="flex-1 flex flex-col items-center justify-center py-1 text-[9px] gap-0.5 text-gray-400 bg-none border-none">
+          <Link href={business.areas?.slug === 'all' ? '/' : `/${business.areas?.slug || ''}`} className="flex-1 flex flex-col items-center justify-center py-1 text-[9px] gap-0.5 text-gray-400 bg-none border-none">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
             </svg>

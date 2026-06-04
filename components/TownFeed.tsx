@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { supabase, generateUUID, triggerNavigationStart } from '@/lib/supabase';
 import { getOptimizedImageUrl } from '@/lib/cloudinary';
 import AdBanner from '@/components/AdBanner';
+import { getAreaCategories, getRandomizedListings, getBusinessLink, getListingLink, getCategoryLink } from '@/lib/dbHelpers';
 
 interface Area {
   id: string;
@@ -61,12 +62,13 @@ interface TownFeedProps {
   initialStories: Business[];
   initialAds: Ad[];
   initialCategories: Category[];
+  allAreas?: Area[];
 }
 
 const PS = 5; // Categories per page
 const detailPS = 18; // Listings per page in detail view
 
-export default function TownFeed({ area, initialStories, initialAds, initialCategories }: TownFeedProps) {
+export default function TownFeed({ area, initialStories, initialAds, initialCategories, allAreas = [] }: TownFeedProps) {
   const router = useRouter();
   
   const [activeTab, setActiveTab] = useState<'home' | 'search' | 'businesses'>('home');
@@ -94,6 +96,13 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
   const [sessionSeed, setSessionSeed] = useState('');
   const [sid, setSid] = useState('');
   const [bizUsernames, setBizUsernames] = useState<Record<string, string>>({});
+
+  // Town Selector states
+  const [showFullSelector, setShowFullSelector] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return !localStorage.getItem('mp_town_selected_v2');
+  });
+  const [tempTownId, setTempTownId] = useState('');
 
   useEffect(() => {
     const initialMap: Record<string, string> = {};
@@ -228,16 +237,17 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
     pageCats.forEach(async (cat) => {
       setLoadingCategoryListings(prev => ({ ...prev, [cat.id]: true }));
       try {
-        const { data, error } = await supabase.rpc('get_randomized_listings', {
-          p_area_id: area.id,
-          p_listing_type: listingType,
-          p_category_id: cat.id,
-          p_seed: sessionSeed || 'default_seed',
-          p_limit: 6,
-          p_offset: 0
-        });
+        const data = await getRandomizedListings(
+          area.id,
+          area.slug,
+          listingType,
+          cat.id,
+          sessionSeed || 'default_seed',
+          6,
+          0
+        );
         
-        if (!error && data) {
+        if (data) {
           setCategoryListings(prev => ({ ...prev, [cat.id]: data }));
         }
       } catch (e) {
@@ -255,15 +265,8 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
     
     // Fetch categories matching type
     try {
-      const { data, error } = await supabase.rpc('get_area_categories', {
-        p_area_id: area.id,
-        p_listing_type: type
-      });
-      if (!error && data) {
-        setCategories(data.filter((c: any) => c.id && c.name));
-      } else {
-        setCategories([]);
-      }
+      const data = await getAreaCategories(area.id, area.slug, type);
+      setCategories(data);
     } catch (e) {
       console.error(e);
     }
@@ -278,16 +281,17 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
   const loadDetailListings = async (cat: Category, pageNum: number) => {
     setLoadingDetail(true);
     try {
-      const { data, error } = await supabase.rpc('get_randomized_listings', {
-        p_area_id: area.id,
-        p_listing_type: listingType,
-        p_category_id: cat.id,
-        p_seed: sessionSeed || 'default_seed',
-        p_limit: detailPS + 1,
-        p_offset: pageNum * detailPS
-      });
+      const data = await getRandomizedListings(
+        area.id,
+        area.slug,
+        listingType,
+        cat.id,
+        sessionSeed || 'default_seed',
+        detailPS + 1,
+        pageNum * detailPS
+      );
 
-      if (!error && data) {
+      if (data) {
         const hasNext = data.length > detailPS;
         setDetailHasNext(hasNext);
         setDetailListings(hasNext ? data.slice(0, detailPS) : data);
@@ -341,7 +345,7 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
     }
 
     const prodSlug = generateSlug(l.name);
-    router.push(`/${username || 'shop'}-${prodSlug}-in-${area.slug}`);
+    router.push(getListingLink(username, prodSlug, area.slug));
   };
 
   const parsePrice = (p: string | null) => {
@@ -385,9 +389,11 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
       <div className="bg-[#1a5c3a] p-2 px-3 flex items-center justify-between gap-2 sticky top-0 z-50 shadow-sm">
         <div className="flex items-center gap-2">
           <Link href="/" className="text-white text-base font-bold tracking-tight" style={{ color: 'white' }}>MyPahad</Link>
-          <span className="text-[10px] text-white/60 border-l border-white/20 pl-2 leading-none">
-            {area.name}
-          </span>
+          {area.slug !== 'all' && (
+            <span className="text-[10px] text-white/60 border-l border-white/20 pl-2 leading-none">
+              {area.name}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-3">
           <Link href="/" className="bg-white/15 text-white border-none px-2 py-1 rounded text-[11px] font-semibold hover:bg-white/25 transition-colors">
@@ -424,8 +430,92 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
         </Link>
       </div>
 
+      {/* Town Selection Header / Banner */}
+      {activeTab === 'home' && (
+        showFullSelector ? (
+          <div className="bg-white border-b border-[#ddd] p-4 flex flex-col items-center justify-center font-sans">
+            <div className="w-full max-w-[360px] flex flex-col gap-3">
+              <div className="text-center mb-1">
+                <div className="text-sm font-bold text-[#1a5c3a]">Select your local bazaar</div>
+                <div className="text-[10px] text-gray-400">Apne Pahad ka Bazaar</div>
+              </div>
+
+              <div className="relative">
+                <select 
+                  value={tempTownId} 
+                  onChange={(e) => setTempTownId(e.target.value)}
+                  className="w-full appearance-none border border-gray-200 rounded-lg p-2.5 pr-8 text-xs focus:border-[#1a5c3a] outline-none bg-white cursor-pointer"
+                >
+                  <option value="">Select your town...</option>
+                  {allAreas?.map(a => (
+                    <option key={a.id} value={a.id}>{a.name} ({a.district})</option>
+                  ))}
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-[10px]">▼</div>
+              </div>
+
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => {
+                    const selected = allAreas?.find(a => a.id === tempTownId);
+                    if (selected) {
+                      localStorage.setItem('mp_town_selected_v2', 'true');
+                      localStorage.setItem('mp_area', JSON.stringify(selected));
+                      router.push(`/${selected.slug}`);
+                    }
+                  }}
+                  disabled={!tempTownId}
+                  className="flex-1 bg-[#1a5c3a] text-white border-none p-2.5 rounded-lg text-xs font-semibold cursor-pointer disabled:opacity-35 disabled:cursor-default active:scale-[0.98] transition-all"
+                >
+                  Enter Bazaar
+                </button>
+                
+                <button 
+                  onClick={() => {
+                    localStorage.setItem('mp_town_selected_v2', 'true');
+                    setShowFullSelector(false);
+                  }}
+                  className="flex-1 bg-gray-100 text-gray-700 border-none p-2.5 rounded-lg text-xs font-semibold cursor-pointer active:scale-[0.98] transition-all"
+                >
+                  Explore Market
+                </button>
+              </div>
+
+              <div className="text-center mt-1">
+                <a 
+                  href="https://support.mypahad.in/whyyourtownnotinlist.html" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-[10px] text-gray-400 hover:text-gray-600 underline"
+                >
+                  Your town not in the list? See why
+                </a>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-white border-b border-[#ddd] p-2.5 px-3 flex items-center justify-between gap-2 shadow-xs text-xs text-gray-600">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="text-[#1a5c3a]">📍</span>
+              <span className="truncate">
+                {area.slug === 'all' 
+                  ? "Check if your local bazaar is listed or explore all other places."
+                  : `You are viewing ${area.name}. Check if your town is listed or explore other places.`
+                }
+              </span>
+            </div>
+            <button 
+              onClick={() => setShowFullSelector(true)}
+              className="text-[#1a5c3a] bg-none border-none font-semibold hover:underline cursor-pointer shrink-0 text-xs"
+            >
+              Select Town
+            </button>
+          </div>
+        )
+      )}
+
       {/* Stories list */}
-      {stories.length > 0 && (
+      {area.slug !== 'all' && stories.length > 0 && (
         <div className="flex gap-2.5 overflow-x-auto p-2 px-3 bg-white border-b border-[#ddd] no-scrollbar">
           {stories.map(b => (
             <div 
@@ -434,7 +524,7 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
                 triggerNavigationStart();
                 localStorage.setItem('mp_view_biz', b.id);
                 localStorage.setItem('mp_prof_back', `/${area.slug}`);
-                router.push(`/${b.username || 'shop'}-in-${area.slug}`);
+                router.push(getBusinessLink(b.username, area.slug));
               }}
               className="shrink-0 text-center w-12 cursor-pointer"
             >
@@ -583,7 +673,7 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
                     {listings.length >= 6 && (
                       <div className="flex justify-center mt-3 pt-2.5 border-t border-dashed border-[#ddd] px-1">
                         <Link 
-                          href={`/${cat.slug}-in-${area.slug}`}
+                          href={getCategoryLink(cat.slug, area.slug)}
                           className="bg-none border border-[#1a5c3a] text-[#1a5c3a] text-[10px] font-semibold cursor-pointer py-1.5 px-3 rounded w-full hover:bg-[#1a5c3a] hover:text-white transition-colors text-center block"
                         >
                           View More →

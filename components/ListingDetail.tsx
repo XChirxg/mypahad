@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase, generateUUID, triggerNavigationStart } from '@/lib/supabase';
 import { getOptimizedImageUrl } from '@/lib/cloudinary';
+import { getBusinessLink, getListingLink } from '@/lib/dbHelpers';
 
 interface Area {
   id: string;
@@ -480,8 +481,8 @@ export default function ListingDetail({ listing, relatedListings }: ListingDetai
     const areaSlug = biz?.areas?.slug || '';
     const bizUsername = biz?.username || 'shop';
     localStorage.setItem('mp_view_biz', bizId);
-    localStorage.setItem('mp_prof_back', `/${bizUsername}-${generateSlug(listing.name)}-in-${areaSlug}`);
-    router.push(`/${bizUsername}-in-${areaSlug}`);
+    localStorage.setItem('mp_prof_back', getListingLink(bizUsername, generateSlug(listing.name), areaSlug));
+    router.push(getBusinessLink(bizUsername, areaSlug));
   };
 
   const getSelectedCount = () => {
@@ -703,8 +704,8 @@ export default function ListingDetail({ listing, relatedListings }: ListingDetai
               const areaSlug = biz?.areas?.slug || '';
               const bizUsername = biz?.username || 'shop';
               localStorage.setItem('mp_view_biz', bizId);
-              localStorage.setItem('mp_prof_back', `/${bizUsername}-${generateSlug(listing.name)}-in-${areaSlug}`);
-              router.push(`/${bizUsername}-in-${areaSlug}`);
+              localStorage.setItem('mp_prof_back', getListingLink(bizUsername, generateSlug(listing.name), areaSlug));
+              router.push(getBusinessLink(bizUsername, areaSlug));
             }}
             className="flex items-center gap-3 p-2 rounded-lg border border-[#ddd] hover:bg-[#e8f5ee] cursor-pointer transition-colors"
           >
@@ -751,7 +752,7 @@ export default function ListingDetail({ listing, relatedListings }: ListingDetai
                       rAreaSlug = (b.areas as any)?.slug || areaSlug;
                     }
                   }
-                  router.push(`/${rUsername || 'shop'}-${generateSlug(r.name)}-in-${rAreaSlug || areaSlug}`);
+                  router.push(getListingLink(rUsername, generateSlug(r.name), rAreaSlug || areaSlug));
                 }}
                 className="shrink-0 w-[110px] bg-white rounded-lg border border-[#ddd] overflow-hidden cursor-pointer shadow-sm hover:border-[#1a5c3a] transition-colors"
               >

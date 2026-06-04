@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { supabase, triggerNavigationStart } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { getOptimizedImageUrl } from '@/lib/cloudinary';
+import { getListingLink } from '@/lib/dbHelpers';
 
 interface Ad {
   id: string;
@@ -58,9 +59,6 @@ export default function AdBanner({ ad, areaSlug }: AdBannerProps) {
           .eq('id', ad.listing_id)
           .single();
         if (l) {
-          localStorage.setItem('mp_view_lst', JSON.stringify(l));
-          localStorage.setItem('mp_lst_back', `/${areaSlug}`);
-          
           const username = l.businesses?.username || 'shop';
           const cleanName = l.name
             .toString()
@@ -72,8 +70,11 @@ export default function AdBanner({ ad, areaSlug }: AdBannerProps) {
             .replace(/^-+/, '')
             .replace(/-+$/, '');
             
+          localStorage.setItem('mp_view_lst', JSON.stringify(l));
+          localStorage.setItem('mp_lst_back', areaSlug === 'all' ? '/' : `/${areaSlug}`);
+          
           triggerNavigationStart();
-          router.push(`/${username}-${cleanName}-in-${areaSlug}`);
+          router.push(getListingLink(username, cleanName, areaSlug));
         }
       } catch (e) {
         console.error(e);

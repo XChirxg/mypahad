@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { getOptimizedImageUrl } from '@/lib/cloudinary';
+import { getBusinessLink, getListingLink } from '@/lib/dbHelpers';
 
 interface Business {
   id: string;
@@ -42,7 +43,7 @@ interface PostDetailProps {
 export default function PostDetail({ post, business, listings }: PostDetailProps) {
   const areaSlug = business.areas?.slug || 'town';
   const bizUsername = business.username || 'shop';
-  const bizProfileUrl = `/${bizUsername}-in-${areaSlug}`;
+  const bizProfileUrl = getBusinessLink(bizUsername, areaSlug);
   
   // Format YouTube Link
   const getYouTubeId = (url: string) => {
@@ -190,7 +191,7 @@ export default function PostDetail({ post, business, listings }: PostDetailProps
               <div 
                 key={l.id} 
                 onClick={() => {
-                  window.location.href = `/${bizUsername}-${generateSlug(l.name)}-in-${areaSlug}`;
+                  window.location.href = getListingLink(bizUsername, generateSlug(l.name), areaSlug);
                 }}
                 className="bg-white rounded border border-gray-200 overflow-hidden cursor-pointer shadow-sm"
               >

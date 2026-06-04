@@ -1,18 +1,55 @@
 import { supabase } from '@/lib/supabase';
-import TownSelector from '@/components/TownSelector';
+import TownFeed from '@/components/TownFeed';
+import { getAreaCategories } from '@/lib/dbHelpers';
 
 export const revalidate = 3600; // Cache landing page and static links for 1 hour
 
 export default async function Home() {
-  const { data: areas } = await supabase
+  // 1. Fetch the "All" area
+  const { data: area } = await supabase
+    .from('areas')
+    .select('*')
+    .eq('slug', 'all')
+    .eq('is_active', true)
+    .single();
+
+  if (!area) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6 bg-white text-center font-sans">
+        <p className="text-sm text-gray-500">Service temporarily unavailable. Please try again later.</p>
+      </div>
+    );
+  }
+
+  // 2. Fetch categories for "all" area
+  const categories = await getAreaCategories(area.id, area.slug, null);
+
+  // 3. Fetch active ads for "all" area
+  const now = new Date().toISOString();
+  const { data: ads } = await supabase
+    .from('ads')
+    .select('*')
+    .eq('area_id', area.id)
+    .eq('is_active', true)
+    .lte('starts_at', now)
+    .gte('ends_at', now);
+
+  // 4. Fetch other active areas (excluding 'all') for the selector
+  const { data: otherAreas } = await supabase
     .from('areas')
     .select('id, name, slug, state, district, is_active')
     .eq('is_active', true)
-    .order('state')
-    .order('district')
+    .neq('slug', 'all')
     .order('name');
 
   return (
-    <TownSelector initialAreas={areas || []} />
+    <TownFeed
+      area={area}
+      initialStories={[]} // No stories/business circles on "All"
+      initialAds={ads || []}
+      initialCategories={categories || []}
+      allAreas={otherAreas || []}
+    />
   );
 }
+

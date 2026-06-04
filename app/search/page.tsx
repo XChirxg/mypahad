@@ -4,11 +4,14 @@ import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { supabase, triggerNavigationStart } from '@/lib/supabase';
+import { getBusinessLink, getListingLink } from '@/lib/dbHelpers';
 
 interface Area {
   id: string;
   name: string;
   slug: string;
+  state?: string;
+  district?: string;
 }
 
 interface Category {
@@ -43,6 +46,7 @@ interface Listing {
     business_name: string;
     username?: string | null;
     areas?: {
+      name?: string;
       slug: string;
     };
   };
@@ -61,12 +65,14 @@ function SearchContent() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [quickBizResults, setQuickBizResults] = useState<Business[]>([]);
   const [quickLstResults, setQuickLstResults] = useState<Listing[]>([]);
+  const [quickAreaResults, setQuickAreaResults] = useState<Area[]>([]);
   
   // Full results
   const [hasSearched, setHasSearched] = useState(false);
   const [loading, setLoading] = useState(false);
   const [bizResults, setBizResults] = useState<Business[]>([]);
   const [lstResults, setLstResults] = useState<Listing[]>([]);
+  const [areaResults, setAreaResults] = useState<Area[]>([]);
   
   // Explore listings (fallback when no results found)
   const [exploreListings, setExploreListings] = useState<Listing[]>([]);
@@ -134,14 +140,17 @@ function SearchContent() {
     if (!currentArea) return;
     setLoading(true);
     try {
-      const { data } = await supabase
+      let queryBuilder = supabase
         .from('businesses')
-        .select('id, business_name, username, dp_url, description, user_id, categories(name), areas(slug)')
-        .eq('area_id', currentArea.id)
+        .select('id, business_name, username, dp_url, description, user_id, categories(name), areas(name, slug)')
         .eq('is_approved', true)
-        .eq('is_active', true)
-        .order('hearts', { ascending: false });
+        .eq('is_active', true);
       
+      if (currentArea.slug !== 'all') {
+        queryBuilder = queryBuilder.eq('area_id', currentArea.id);
+      }
+
+      const { data } = await queryBuilder.order('hearts', { ascending: false });
       setBizResults((data as unknown as Business[]) || []);
     } catch (e) {
       console.error(e);
@@ -163,28 +172,52 @@ function SearchContent() {
     debounceTimer.current = setTimeout(async () => {
       if (!currentArea) return;
       try {
-        const [lstRes, bizRes] = await Promise.all([
-          supabase
-            .from('listings')
-            .select('id, name, price, discount_price, image_url, listing_type, business_id, businesses!inner(id, business_name, username, area_id, is_approved, is_active, areas(slug))')
-            .ilike('name', `%${q}%`)
-            .eq('businesses.area_id', currentArea.id)
-            .eq('businesses.is_approved', true)
-            .eq('businesses.is_active', true)
-            .eq('is_available', true)
-            .limit(5),
-          supabase
-            .from('businesses')
-            .select('id, business_name, username, dp_url, user_id, categories(name), areas(slug)')
-            .ilike('business_name', `%${q}%`)
-            .eq('area_id', currentArea.id)
-            .eq('is_approved', true)
-            .eq('is_active', true)
-            .limit(3)
-        ]);
+        let lstQuery = supabase
+          .from('listings')
+          .select('id, name, price, discount_price, image_url, listing_type, business_id, businesses!inner(id, business_name, username, area_id, is_approved, is_active, areas(name, slug))')
+          .ilike('name', `%${q}%`)
+          .eq('businesses.is_approved', true)
+          .eq('businesses.is_active', true)
+          .eq('is_available', true);
 
-        setQuickLstResults((lstRes.data as unknown as Listing[]) || []);
-        setQuickBizResults((bizRes.data as unknown as Business[]) || []);
+        let bizQuery = supabase
+          .from('businesses')
+          .select('id, business_name, username, dp_url, user_id, categories(name), areas(name, slug)')
+          .ilike('business_name', `%${q}%`)
+          .eq('is_approved', true)
+          .eq('is_active', true);
+
+        if (currentArea.slug !== 'all') {
+          lstQuery = lstQuery.eq('businesses.area_id', currentArea.id);
+          bizQuery = bizQuery.eq('area_id', currentArea.id);
+        }
+
+        const promises: PromiseLike<any>[] = [
+          lstQuery.limit(5),
+          bizQuery.limit(3)
+        ];
+
+        if (currentArea.slug === 'all') {
+          promises.push(
+            supabase
+              .from('areas')
+              .select('id, name, slug, state, district')
+              .eq('is_active', true)
+              .neq('slug', 'all')
+              .ilike('name', `%${q}%`)
+              .limit(3)
+          );
+        }
+
+        const results = await Promise.all(promises);
+
+        setQuickLstResults((results[0].data as unknown as Listing[]) || []);
+        setQuickBizResults((results[1].data as unknown as Business[]) || []);
+        if (currentArea.slug === 'all') {
+          setQuickAreaResults(results[2]?.data || []);
+        } else {
+          setQuickAreaResults([]);
+        }
         setDropdownOpen(true);
       } catch (err) {
         console.error(err);
@@ -203,42 +236,70 @@ function SearchContent() {
     if (!currentArea) return;
 
     try {
-      const [lstRes, bizRes] = await Promise.all([
-        supabase
-          .from('listings')
-          .select('id, name, price, discount_price, image_url, listing_type, description, business_id, businesses!inner(id, business_name, username, area_id, is_approved, is_active, areas(slug))')
-          .ilike('name', `%${q}%`)
-          .eq('businesses.area_id', currentArea.id)
-          .eq('businesses.is_approved', true)
-          .eq('businesses.is_active', true)
-          .eq('is_available', true)
-          .limit(20),
-        supabase
-          .from('businesses')
-          .select('id, business_name, username, dp_url, description, user_id, categories(name), areas(name, slug)')
-          .ilike('business_name', `%${q}%`)
-          .eq('area_id', currentArea.id)
-          .eq('is_approved', true)
-          .eq('is_active', true)
-          .limit(10)
-      ]);
+      let lstQuery = supabase
+        .from('listings')
+        .select('id, name, price, discount_price, image_url, listing_type, description, business_id, businesses!inner(id, business_name, username, area_id, is_approved, is_active, areas(name, slug))')
+        .ilike('name', `%${q}%`)
+        .eq('businesses.is_approved', true)
+        .eq('businesses.is_active', true)
+        .eq('is_available', true);
 
-      const lsts = (lstRes.data as unknown as Listing[]) || [];
-      const bizs = (bizRes.data as unknown as Business[]) || [];
+      let bizQuery = supabase
+        .from('businesses')
+        .select('id, business_name, username, dp_url, description, user_id, categories(name), areas(name, slug)')
+        .ilike('business_name', `%${q}%`)
+        .eq('is_approved', true)
+        .eq('is_active', true);
+
+      if (currentArea.slug !== 'all') {
+        lstQuery = lstQuery.eq('businesses.area_id', currentArea.id);
+        bizQuery = bizQuery.eq('area_id', currentArea.id);
+      }
+
+      const promises: PromiseLike<any>[] = [
+        lstQuery.limit(20),
+        bizQuery.limit(10)
+      ];
+
+      if (currentArea.slug === 'all') {
+        promises.push(
+          supabase
+            .from('areas')
+            .select('id, name, slug, state, district')
+            .eq('is_active', true)
+            .neq('slug', 'all')
+            .ilike('name', `%${q}%`)
+            .limit(5)
+        );
+      }
+
+      const results = await Promise.all(promises);
+
+      const lsts = (results[0].data as unknown as Listing[]) || [];
+      const bizs = (results[1].data as unknown as Business[]) || [];
 
       setLstResults(lsts);
       setBizResults(bizs);
+      if (currentArea.slug === 'all') {
+        setAreaResults(results[2]?.data || []);
+      } else {
+        setAreaResults([]);
+      }
 
       // Fetch explore products if no search results found
-      if (lsts.length === 0 && bizs.length === 0) {
-        const { data } = await supabase
+      if (lsts.length === 0 && bizs.length === 0 && (currentArea.slug !== 'all' || (results[2]?.data || []).length === 0)) {
+        let expQuery = supabase
           .from('listings')
           .select('id, name, price, discount_price, image_url, listing_type, description, business_id, businesses!inner(id, business_name, username, area_id, is_approved, is_active, areas(slug))')
-          .eq('businesses.area_id', currentArea.id)
           .eq('businesses.is_approved', true)
           .eq('businesses.is_active', true)
-          .eq('is_available', true)
-          .limit(30);
+          .eq('is_available', true);
+
+        if (currentArea.slug !== 'all') {
+          expQuery = expQuery.eq('businesses.area_id', currentArea.id);
+        }
+
+        const { data } = await expQuery.limit(30);
 
         if (data && data.length > 0) {
           const shuffled = [...data].sort(() => Math.random() - 0.5).slice(0, 5);
@@ -271,7 +332,7 @@ function SearchContent() {
     const areaSlug = l.businesses?.areas?.slug || currentArea?.slug || 'town';
     const prodSlug = generateSlug(l.name);
     triggerNavigationStart();
-    router.push(`/${bizUsername}-${prodSlug}-in-${areaSlug}`);
+    router.push(getListingLink(bizUsername, prodSlug, areaSlug));
   };
 
   const openProfile = (b: Business) => {
@@ -280,7 +341,7 @@ function SearchContent() {
     const areaSlug = b.areas?.slug || currentArea?.slug || 'town';
     const bizUsername = b.username || 'shop';
     triggerNavigationStart();
-    router.push(`/${bizUsername}-in-${areaSlug}`);
+    router.push(getBusinessLink(bizUsername, areaSlug));
   };
 
   const parsePrice = (p: string | null) => {
@@ -317,6 +378,8 @@ function SearchContent() {
   };
 
   const renderSrpRow = (l: Listing) => {
+    const isAllArea = currentArea?.slug === 'all';
+    const townText = (isAllArea && l.businesses?.areas?.slug !== 'all' && l.businesses?.areas?.name) ? ` (in ${l.businesses.areas.name})` : '';
     return (
       <div 
         key={l.id} 
@@ -337,7 +400,10 @@ function SearchContent() {
         <div className="flex-1 min-w-0 pt-0.5">
           <div className="text-xs font-bold text-gray-800 leading-tight">{l.name}</div>
           {renderPrice(l)}
-          <div className="text-[10px] text-gray-400 truncate mt-0.5">{l.businesses?.business_name}</div>
+          <div className="text-[10px] text-gray-400 truncate mt-0.5">
+            {l.businesses?.business_name}
+            {townText && <span className="text-[9px] font-normal text-gray-400">{townText}</span>}
+          </div>
           {l.description && <div className="text-[9.5px] text-gray-500 line-clamp-2 mt-1 leading-normal">{l.description}</div>}
           <span className="text-[9px] bg-[#e8f5ee] text-[#1a5c3a] px-1.5 py-0.5 rounded font-semibold mt-1 inline-block">
             {l.listing_type || 'Item'}
@@ -382,20 +448,47 @@ function SearchContent() {
                 className="shrink-0 h-8.5 px-3.5 bg-[#e05a2b] text-white border-none rounded text-xs font-bold active:scale-[0.98] transition-all"
               >
                 Search
-              </button>
-
-              {/* Quick results Dropdown */}
+              </button>              {/* Quick results Dropdown */}
               {dropdownOpen && (
                 <div className="absolute top-[calc(100%+4px)] left-0 right-0 bg-white border border-[#ddd] rounded shadow-lg max-h-[260px] overflow-y-auto z-50 flex flex-col">
-                  {quickBizResults.length === 0 && quickLstResults.length === 0 ? (
+                  {quickBizResults.length === 0 && quickLstResults.length === 0 && quickAreaResults.length === 0 ? (
                     <div className="p-3 text-[11px] text-gray-400">No quick results — press Search</div>
                   ) : (
                     <>
+                      {quickAreaResults.length > 0 && (
+                        <>
+                          <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest p-1.5 px-3.5 bg-gray-50 border-b border-gray-100">Locations</div>
+                          {quickAreaResults.map(a => (
+                            <div 
+                              key={a.id} 
+                              onClick={() => {
+                                setQuery('');
+                                setDropdownOpen(false);
+                                localStorage.setItem('mp_area', JSON.stringify(a));
+                                router.push(`/${a.slug}`);
+                              }}
+                              className="flex items-center gap-2.5 p-2 px-3 border-b border-gray-50 hover:bg-[#e8f5ee] cursor-pointer"
+                            >
+                              <div className="w-8 h-8 rounded bg-[#e8f5ee] flex items-center justify-center shrink-0">
+                                <span className="text-xs">📍</span>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-[11px] font-semibold text-gray-800 truncate">{a.name}</div>
+                                <div className="text-[9px] text-gray-400 truncate">{a.district}, {a.state}</div>
+                              </div>
+                              <span className="text-[9px] bg-gray-150 text-gray-400 px-1 py-0.5 rounded">Town</span>
+                            </div>
+                          ))}
+                        </>
+                      )}
+
                       {quickBizResults.length > 0 && (
                         <>
                           <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest p-1.5 px-3.5 bg-gray-50 border-b border-gray-100">Businesses</div>
                           {quickBizResults.map(b => {
                             const claimed = b.user_id !== null;
+                            const isAllArea = currentArea?.slug === 'all';
+                            const townText = (isAllArea && b.areas?.slug !== 'all' && b.areas?.name) ? ` (in ${b.areas.name})` : '';
                             return (
                               <div 
                                 key={b.id} 
@@ -421,10 +514,11 @@ function SearchContent() {
                                       </span>
                                     )}
                                     {b.business_name}
+                                    {townText && <span className="text-[9px] font-normal text-gray-400">{townText}</span>}
                                   </div>
                                   <div className="text-[9px] text-gray-400">{b.categories?.name}</div>
                                 </div>
-                                <span className="text-[9px] bg-gray-100 text-gray-400 px-1 py-0.5 rounded">Shop</span>
+                                <span className="text-[9px] bg-gray-150 text-gray-400 px-1 py-0.5 rounded">Shop</span>
                               </div>
                             );
                           })}
@@ -434,32 +528,39 @@ function SearchContent() {
                       {quickLstResults.length > 0 && (
                         <>
                           <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest p-1.5 px-3.5 bg-gray-50 border-b border-gray-100">Listings</div>
-                          {quickLstResults.map(l => (
-                            <div 
-                              key={l.id} 
-                              onClick={() => { setQuery(''); setDropdownOpen(false); openProduct(l); }}
-                              className="flex items-center gap-2.5 p-2 px-3 border-b border-gray-50 hover:bg-[#e8f5ee] cursor-pointer"
-                            >
-                              {l.image_url ? (
-                                <img src={l.image_url} className="w-8 h-8 rounded object-cover shrink-0 bg-gray-50" alt="" />
-                              ) : (
-                                <div className="w-8 h-8 rounded bg-[#e8f5ee] flex items-center justify-center shrink-0">
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" strokeWidth="1.5">
-                                    <rect x="3" y="3" width="18" height="18" rx="2"/>
-                                  </svg>
+                          {quickLstResults.map(l => {
+                            const isAllArea = currentArea?.slug === 'all';
+                            const townText = (isAllArea && l.businesses?.areas?.slug !== 'all' && l.businesses?.areas?.name) ? ` (in ${l.businesses.areas.name})` : '';
+                            return (
+                              <div 
+                                key={l.id} 
+                                onClick={() => { setQuery(''); setDropdownOpen(false); openProduct(l); }}
+                                className="flex items-center gap-2.5 p-2 px-3 border-b border-gray-50 hover:bg-[#e8f5ee] cursor-pointer"
+                              >
+                                {l.image_url ? (
+                                  <img src={l.image_url} className="w-8 h-8 rounded object-cover shrink-0 bg-gray-50" alt="" />
+                                ) : (
+                                  <div className="w-8 h-8 rounded bg-[#e8f5ee] flex items-center justify-center shrink-0">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" strokeWidth="1.5">
+                                      <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                    </svg>
+                                  </div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-[11px] font-semibold text-gray-800 truncate">
+                                    {l.name}
+                                    {townText && <span className="text-[9px] font-normal text-gray-400">{townText}</span>}
+                                  </div>
+                                  <div className="text-[9px] text-gray-400 truncate">{l.businesses?.business_name}</div>
                                 </div>
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <div className="text-[11px] font-semibold text-gray-800 truncate">{l.name}</div>
-                                <div className="text-[9px] text-gray-400 truncate">{l.businesses?.business_name}</div>
+                                {(l.discount_price || l.price) && (
+                                  <span className="text-[9px] bg-[#e8f5ee] text-[#1a5c3a] px-1.5 py-0.5 rounded font-semibold shrink-0">
+                                    {l.discount_price || l.price}
+                                  </span>
+                                )}
                               </div>
-                              {(l.discount_price || l.price) && (
-                                <span className="text-[9px] bg-[#e8f5ee] text-[#1a5c3a] px-1.5 py-0.5 rounded font-semibold shrink-0">
-                                  {l.discount_price || l.price}
-                                </span>
-                              )}
-                            </div>
-                          ))}
+                            );
+                          })}
                         </>
                       )}
                       
@@ -556,7 +657,7 @@ function SearchContent() {
       ) : activeTab === 'search' && hasSearched ? (
         /* Results view */
         <div className="flex flex-col">
-          {bizResults.length === 0 && lstResults.length === 0 ? (
+          {bizResults.length === 0 && lstResults.length === 0 && areaResults.length === 0 ? (
             /* Empty State fallback with explore */
             <div className="flex flex-col">
               <div className="text-center py-10 px-4 bg-white border-b border-[#ddd] mb-2.5 flex flex-col items-center">
@@ -577,12 +678,40 @@ function SearchContent() {
             </div>
           ) : (
             <>
+              {/* Show matching locations */}
+              {areaResults.length > 0 && (
+                <div className="mb-2">
+                  <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest p-2 px-3.5 bg-gray-50 border-b border-gray-150">Locations ({areaResults.length})</div>
+                  {areaResults.map(a => (
+                    <div 
+                      key={a.id} 
+                      onClick={() => {
+                        localStorage.setItem('mp_area', JSON.stringify(a));
+                        router.push(`/${a.slug}`);
+                      }}
+                      className="flex gap-2.5 p-2.5 bg-white border-b border-gray-150 hover:bg-[#e8f5ee] cursor-pointer items-start"
+                    >
+                      <div className="w-[40px] h-[40px] rounded bg-[#e8f5ee] shrink-0 flex items-center justify-center border border-gray-200">
+                        <span className="text-xs">📍</span>
+                      </div>
+                      <div className="flex-1 min-w-0 pt-0.5">
+                        <div className="text-xs font-bold text-gray-800">{a.name}</div>
+                        <div className="text-[10px] text-gray-400 mt-0.5">{a.district}, {a.state}</div>
+                      </div>
+                      <span className="text-[9px] bg-gray-150 text-gray-400 px-1.5 py-0.5 rounded font-semibold mt-1 inline-block">Town</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* Show matching shops */}
               {bizResults.length > 0 && (
                 <div className="mb-2">
                   <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest p-2 px-3.5 bg-gray-50 border-b border-gray-150">Businesses ({bizResults.length})</div>
                   {bizResults.map(b => {
                     const claimed = b.user_id !== null;
+                    const isAllArea = currentArea?.slug === 'all';
+                    const townText = (isAllArea && b.areas?.slug !== 'all' && b.areas?.name) ? ` (in ${b.areas.name})` : '';
                     return (
                       <div 
                         key={b.id} 
@@ -601,6 +730,7 @@ function SearchContent() {
                         <div className="flex-1 min-w-0 pt-0.5">
                           <div className="text-xs font-bold text-gray-800 flex items-center gap-1 flex-wrap">
                             {b.business_name}
+                            {townText && <span className="text-[9.5px] font-normal text-gray-400">{townText}</span>}
                             {claimed && (
                               <span className="inline-flex items-center justify-center bg-[#0095f6] text-white w-3 h-3 rounded-full shrink-0">
                                 <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4">

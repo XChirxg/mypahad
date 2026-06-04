@@ -6,6 +6,7 @@ import ProfileDetail from '@/components/ProfileDetail';
 import ListingDetail from '@/components/ListingDetail';
 import CategoryDetail from '@/components/CategoryDetail';
 import PostDetail from '@/components/PostDetail';
+import { getAreaCategories, getRandomizedListings } from '@/lib/dbHelpers';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -32,6 +33,22 @@ function parsePrice(p: string | null): number {
 async function resolveSlug(slug: string) {
   const decodedSlug = decodeURIComponent(slug);
 
+  // A. Check legacy redirects
+  if (decodedSlug.endsWith('-in-all')) {
+    const cleanSlug = decodedSlug.substring(0, decodedSlug.length - 7);
+    return {
+      type: 'redirect' as const,
+      destination: `/${cleanSlug}`,
+    };
+  }
+
+  if (decodedSlug === 'all') {
+    return {
+      type: 'redirect' as const,
+      destination: '/',
+    };
+  }
+
   // A. Check if the slug contains "-in-"
   if (decodedSlug.includes('-in-')) {
     const lastInIndex = decodedSlug.lastIndexOf('-in-');
@@ -47,6 +64,13 @@ async function resolveSlug(slug: string) {
       .single();
 
     if (!area) return null;
+
+    if (area.slug === 'all') {
+      return {
+        type: 'redirect' as const,
+        destination: '/',
+      };
+    }
 
     // Check if left matches a blog post slug (e.g. zicafe-post-grand-opening)
     if (left.toLowerCase().includes('-post-')) {
@@ -140,15 +164,16 @@ async function resolveSlug(slug: string) {
       .single();
 
     if (category) {
-      // Fetch initial listings in this category and area using get_randomized_listings
-      const { data: listings } = await supabase.rpc('get_randomized_listings', {
-        p_area_id: area.id,
-        p_listing_type: null,
-        p_category_id: category.id,
-        p_seed: 'static_seed_123',
-        p_limit: 19, // 18 + 1 to check hasNext
-        p_offset: 0,
-      });
+      // Fetch initial listings in this category and area using helper
+      const listings = await getRandomizedListings(
+        area.id,
+        area.slug,
+        null,
+        category.id,
+        'static_seed_123',
+        19,
+        0
+      );
 
       const pageListings = (listings || []).slice(0, 18);
       const hasNext = (listings || []).length > 18;
@@ -265,7 +290,7 @@ async function resolveSlug(slug: string) {
     return null;
   }
 
-  // B. Does not contain "-in-": check if it's a town slug or is a username
+  // B. Does not contain "-in-": check if it's a town slug, category, listing or is a username
   
   // B1. Check areas
   const { data: area } = await supabase
@@ -276,6 +301,13 @@ async function resolveSlug(slug: string) {
     .single();
 
   if (area) {
+    if (area.slug === 'all') {
+      return {
+        type: 'redirect' as const,
+        destination: '/',
+      };
+    }
+
     // Fetch stories (active & approved businesses in the area)
     const { data: stories } = await supabase
       .from('businesses')
@@ -297,32 +329,14 @@ async function resolveSlug(slug: string) {
       .gte('ends_at', now);
 
     // Fetch initial categories
-    const { data: categories } = await supabase.rpc('get_area_categories', {
-      p_area_id: area.id,
-      p_listing_type: null,
-    });
-
-    const filteredCats = (categories || []).filter((c: any) => c.id && c.name);
-    const catIds = filteredCats.map((c: any) => c.id);
-
-    // Fetch category slugs
-    const { data: dbCats } = await supabase
-      .from('categories')
-      .select('id, slug')
-      .in('id', catIds);
-
-    const slugMap = new Map(dbCats?.map((c) => [c.id, c.slug]) || []);
-    const categoriesWithSlugs = filteredCats.map((c: any) => ({
-      ...c,
-      slug: slugMap.get(c.id) || generateSlug(c.name),
-    }));
+    const categories = await getAreaCategories(area.id, area.slug, null);
 
     return {
       type: 'town' as const,
       area,
       stories: stories || [],
       ads: ads || [],
-      categories: categoriesWithSlugs,
+      categories,
     };
   }
 
@@ -333,20 +347,228 @@ async function resolveSlug(slug: string) {
 
   const { data: biz } = await supabase
     .from('businesses')
-    .select('id, username, areas(slug)')
+    .select('id, username, areas(id, name, slug)')
     .eq('username', usernameClean)
     .single();
 
   if (biz && biz.areas) {
     const areaSlug = (biz.areas as any).slug;
-    return {
-      type: 'redirect' as const,
-      destination: `/${biz.username}-in-${areaSlug}`,
-    };
+    if (areaSlug === 'all') {
+      // Resolve it as a business profile directly!
+      const { data: photos } = await supabase
+        .from('business_photos')
+        .select('*')
+        .eq('business_id', biz.id)
+        .order('sort_order');
+
+      const { data: listings } = await supabase
+        .from('listings')
+        .select('*')
+        .eq('business_id', biz.id)
+        .eq('is_available', true)
+        .order('is_featured', { ascending: false })
+        .order('created_at', { ascending: false })
+        .range(0, 8);
+
+      const { data: posts } = await supabase
+        .from('posts')
+        .select('*')
+        .eq('business_id', biz.id)
+        .order('created_at', { ascending: false });
+
+      return {
+        type: 'profile' as const,
+        business: {
+          ...biz,
+          areas: biz.areas
+        },
+        photos: photos || [],
+        listings: listings || [],
+        posts: posts || [],
+      };
+    } else {
+      return {
+        type: 'redirect' as const,
+        destination: `/${biz.username}-in-${areaSlug}`,
+      };
+    }
+  }
+
+  // B3. Check if it matches a listing or blog post for a business in the "All" area
+  const { data: allAreaBusinesses } = await supabase
+    .from('businesses')
+    .select('id, username, business_name, whatsapp, dp_url, area_id, category_id, latitude, longitude, delivery_charges')
+    .eq('area_id', 'a46763ea-4cfd-4336-aad0-e61163f5d430') // 'all' area ID
+    .eq('is_approved', true)
+    .eq('is_active', true);
+
+  if (allAreaBusinesses) {
+    const sortedBizs = [...allAreaBusinesses].sort(
+      (a, b) => (b.username || '').length - (a.username || '').length
+    );
+
+    for (const biz of sortedBizs) {
+      const username = (biz.username || '').toLowerCase();
+      if (username && decodedSlug.startsWith(username + '-')) {
+        const productSlug = decodedSlug.substring(username.length + 1);
+
+        // Check for blog post (e.g. zicafe-post-grand-opening)
+        if (productSlug.startsWith('post-')) {
+          const postSlug = productSlug.substring(5); // skip "post-"
+          const { data: post } = await supabase
+            .from('posts')
+            .select('*')
+            .eq('business_id', biz.id)
+            .eq('slug', postSlug.toLowerCase())
+            .single();
+
+          if (post) {
+            const { data: listings } = await supabase
+              .from('listings')
+              .select('id, name, price, discount_price, image_url')
+              .eq('business_id', biz.id)
+              .eq('is_available', true)
+              .limit(3);
+
+            return {
+              type: 'post' as const,
+              post,
+              business: {
+                ...biz,
+                areas: {
+                  name: 'All',
+                  slug: 'all'
+                }
+              },
+              listings: listings || [],
+            };
+          }
+        }
+
+        // Check for listing
+        const { data: bizListings } = await supabase
+          .from('listings')
+          .select('*')
+          .eq('business_id', biz.id)
+          .eq('is_available', true);
+
+        if (bizListings) {
+          const matchingListing = bizListings.find(
+            (l) => generateSlug(l.name) === productSlug.toLowerCase()
+          );
+
+          if (matchingListing) {
+            const listingWithBiz = {
+              ...matchingListing,
+              businesses: {
+                ...biz,
+                areas: {
+                  name: 'All',
+                  slug: 'all',
+                },
+              },
+            };
+
+            // Fetch related listings
+            let rel: any[] = [];
+            const { data: sameBizData } = await supabase
+              .from('listings')
+              .select('*, businesses(id, business_name, whatsapp, area_id, is_approved, is_active, category_id, latitude, longitude, delivery_charges)')
+              .eq('business_id', biz.id)
+              .eq('is_available', true)
+              .neq('id', matchingListing.id)
+              .limit(9);
+            if (sameBizData) rel = sameBizData;
+
+            const needed = 9 - rel.length;
+            if (needed > 0 && biz.category_id) {
+              const { data: otherBizData } = await supabase
+                .from('listings')
+                .select('*, businesses!inner(id, business_name, whatsapp, area_id, is_approved, is_active, category_id, latitude, longitude, delivery_charges)')
+                .eq('businesses.category_id', biz.category_id)
+                .neq('business_id', biz.id)
+                .eq('businesses.is_approved', true)
+                .eq('businesses.is_active', true)
+                .eq('is_available', true)
+                .neq('id', matchingListing.id)
+                .limit(needed);
+
+              if (otherBizData) {
+                const formattedOthers = otherBizData.map((item: any) => ({
+                  ...item,
+                  is_other_seller: true,
+                }));
+                rel = rel.concat(formattedOthers);
+              }
+            }
+
+            return {
+              type: 'listing' as const,
+              listing: listingWithBiz,
+              relatedListings: rel,
+            };
+          }
+        }
+      }
+    }
+  }
+
+  // B4. Check if it matches a category slug in "All"
+  const { data: category } = await supabase
+    .from('categories')
+    .select('*')
+    .eq('slug', decodedSlug)
+    .single();
+
+  if (category) {
+    const { data: allArea } = await supabase
+      .from('areas')
+      .select('*')
+      .eq('slug', 'all')
+      .eq('is_active', true)
+      .single();
+
+    if (allArea) {
+      const listings = await getRandomizedListings(
+        allArea.id,
+        allArea.slug,
+        null,
+        category.id,
+        'static_seed_123',
+        19,
+        0
+      );
+
+      const pageListings = (listings || []).slice(0, 18);
+      const hasNext = (listings || []).length > 18;
+
+      // Fetch usernames for these businesses
+      const bizIds = Array.from(new Set(pageListings.map((l: any) => l.business_id)));
+      const usernames: Record<string, string> = {};
+      if (bizIds.length > 0) {
+        const { data: bizs } = await supabase
+          .from('businesses')
+          .select('id, username')
+          .in('id', bizIds);
+        bizs?.forEach((b) => {
+          usernames[b.id] = b.username || '';
+        });
+      }
+
+      return {
+        type: 'category' as const,
+        area: allArea,
+        category,
+        listings: pageListings,
+        hasNext,
+        usernames,
+      };
+    }
   }
 
   return null;
 }
+
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
@@ -457,12 +679,20 @@ export default async function SlugPage({ params }: PageProps) {
   }
 
   if (result.type === 'town') {
+    const { data: otherAreas } = await supabase
+      .from('areas')
+      .select('id, name, slug, state, district, is_active')
+      .eq('is_active', true)
+      .neq('slug', 'all')
+      .order('name');
+
     return (
       <TownFeed
         area={result.area}
         initialStories={result.stories}
         initialAds={result.ads}
         initialCategories={result.categories}
+        allAreas={otherAreas || []}
       />
     );
   }
