@@ -73,6 +73,17 @@ export default function ListingDetail({ listing, relatedListings }: ListingDetai
   const [whatsappDisabled, setWhatsappDisabled] = useState(true);
   const [otherBizCartWarning, setOtherBizCartWarning] = useState(false);
   const [miniCartClosed, setMiniCartClosed] = useState(false);
+  const [bizMenuOpen, setBizMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (bizMenuOpen && !(e.target as HTMLElement).closest('.biz-menu-container')) {
+        setBizMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [bizMenuOpen]);
 
   useEffect(() => {
     // Generate/get Session ID
@@ -517,7 +528,7 @@ export default function ListingDetail({ listing, relatedListings }: ListingDetai
           <Link href={typeof window !== 'undefined' ? localStorage.getItem('mp_lst_back') || '/' : '/'} className="text-white text-base font-bold tracking-tight" style={{ color: 'white' }}>
             MyPahad
           </Link>
-          {townName && (
+          {townName && townName.toLowerCase() !== 'all' && (
             <span className="text-[10px] text-white/70 border-l border-white/30 pl-2 leading-none">
               {townName}
             </span>
@@ -542,6 +553,41 @@ export default function ListingDetail({ listing, relatedListings }: ListingDetai
               </span>
             )}
           </Link>
+          
+          <div className="relative biz-menu-container flex items-center">
+            <button 
+              onClick={() => setBizMenuOpen(!bizMenuOpen)}
+              className="flex items-center justify-center p-1 text-white hover:text-gray-200 bg-none border-none cursor-pointer"
+              title="Business Portal"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 3h18v2H3z"/>
+                <path d="M3 5l2 8h14l2-8z"/>
+                <path d="M5 13v7a2 2 0 002 2h10a2 2 0 002-2v-7"/>
+                <path d="M9 13v4h6v-4"/>
+              </svg>
+            </button>
+            {bizMenuOpen && (
+              <div className="absolute right-0 mt-2 top-7 w-44 bg-white rounded-md shadow-lg py-1.5 z-[1000] border border-gray-200">
+                <a 
+                  href="https://partner.mypahad.in/index.html" 
+                  onClick={() => setBizMenuOpen(false)}
+                  className="block px-4 py-2 text-xs text-gray-700 hover:bg-gray-100 font-sans"
+                  style={{ color: '#374151' }}
+                >
+                  Login Business
+                </a>
+                <a 
+                  href="https://partner.mypahad.in/index.html?tab=register" 
+                  onClick={() => setBizMenuOpen(false)}
+                  className="block px-4 py-2 text-xs text-gray-700 hover:bg-gray-100 border-t border-gray-150 font-sans"
+                  style={{ color: '#374151' }}
+                >
+                  Register as a Business
+                </a>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -720,7 +766,9 @@ export default function ListingDetail({ listing, relatedListings }: ListingDetai
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-xs font-bold text-gray-800 truncate">{bizName}</div>
-              <div className="text-[10px] text-gray-400 truncate mt-0.5">{townName} · View profile →</div>
+              <div className="text-[10px] text-gray-400 truncate mt-0.5">
+                {townName && townName.toLowerCase() !== 'all' ? `${townName} · ` : ''}View profile →
+              </div>
             </div>
             <span className="text-gray-400 text-sm">›</span>
           </div>

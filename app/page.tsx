@@ -42,10 +42,19 @@ export default async function Home() {
     .neq('slug', 'all')
     .order('name');
 
+  // 5. Fetch stories (active & approved businesses across all areas)
+  const { data: stories } = await supabase
+    .from('businesses')
+    .select('id, business_name, dp_url, username')
+    .eq('is_approved', true)
+    .eq('is_active', true)
+    .order('hearts', { ascending: false })
+    .limit(20);
+
   return (
     <TownFeed
       area={area}
-      initialStories={[]} // No stories/business circles on "All"
+      initialStories={stories || []}
       initialAds={ads || []}
       initialCategories={categories || []}
       allAreas={otherAreas || []}

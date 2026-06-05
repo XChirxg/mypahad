@@ -103,6 +103,17 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
     return !localStorage.getItem('mp_town_selected_v2');
   });
   const [tempTownId, setTempTownId] = useState('');
+  const [bizMenuOpen, setBizMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (bizMenuOpen && !(e.target as HTMLElement).closest('.biz-menu-container')) {
+        setBizMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [bizMenuOpen]);
 
   useEffect(() => {
     const initialMap: Record<string, string> = {};
@@ -384,7 +395,7 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
   const totalCatPages = Math.ceil(categories.length / PS);
 
   return (
-    <div className="min-h-screen bg-[#f0f0ee] pb-[60px] font-sans">
+    <div className="min-h-screen bg-[#f0f0ee] pb-4 font-sans">
       {/* Top Navbar */}
       <div className="bg-[#1a5c3a] p-2 px-3 flex items-center justify-between gap-2 sticky top-0 z-50 shadow-sm">
         <div className="flex items-center gap-2">
@@ -396,9 +407,20 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
           )}
         </div>
         <div className="flex items-center gap-3">
-          <Link href="/" className="bg-white/15 text-white border-none px-2 py-1 rounded text-[11px] font-semibold hover:bg-white/25 transition-colors">
-            Change
-          </Link>
+          {!(area.slug === 'all' && showFullSelector) && (
+            <button 
+              onClick={() => {
+                if (area.slug === 'all') {
+                  setShowFullSelector(true);
+                } else {
+                  router.push('/');
+                }
+              }}
+              className="bg-white/15 text-white border-none px-2 py-1 rounded text-[11px] font-semibold hover:bg-white/25 transition-colors cursor-pointer"
+            >
+              Change
+            </button>
+          )}
           {isSeller && (
             <a href="https://partner.mypahad.in" className="bg-white/15 text-white border-none px-2 py-1 rounded text-[11px] font-semibold hover:bg-white/25 transition-colors">
               Dashboard
@@ -416,6 +438,39 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
               </span>
             )}
           </Link>
+          
+          <div className="relative biz-menu-container flex items-center">
+            <button 
+              onClick={() => setBizMenuOpen(!bizMenuOpen)}
+              className="flex items-center justify-center p-1 text-white hover:text-gray-200 bg-none border-none cursor-pointer"
+              title="Business Portal"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 3h18v2H3z"/>
+                <path d="M3 5l2 8h14l2-8z"/>
+                <path d="M5 13v7a2 2 0 002 2h10a2 2 0 002-2v-7"/>
+                <path d="M9 13v4h6v-4"/>
+              </svg>
+            </button>
+            {bizMenuOpen && (
+              <div className="absolute right-0 mt-2 top-7 w-44 bg-white rounded-md shadow-lg py-1.5 z-[1000] border border-gray-200">
+                <a 
+                  href="https://partner.mypahad.in/index.html" 
+                  onClick={() => setBizMenuOpen(false)}
+                  className="block px-4 py-2 text-xs text-gray-700 hover:bg-gray-100"
+                >
+                  Login Business
+                </a>
+                <a 
+                  href="https://partner.mypahad.in/index.html?tab=register" 
+                  onClick={() => setBizMenuOpen(false)}
+                  className="block px-4 py-2 text-xs text-gray-700 hover:bg-gray-100 border-t border-gray-150"
+                >
+                  Register as a Business
+                </a>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -431,65 +486,62 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
       </div>
 
       {/* Town Selection Header / Banner */}
-      {activeTab === 'home' && (
+      {activeTab === 'home' && area.slug === 'all' && (
         showFullSelector ? (
           <div className="bg-white border-b border-[#ddd] p-4 flex flex-col items-center justify-center font-sans">
-            <div className="w-full max-w-[360px] flex flex-col gap-3">
+            <div className="w-full max-w-[360px] flex flex-col gap-2">
               <div className="text-center mb-1">
-                <div className="text-sm font-bold text-[#1a5c3a]">Select your local bazaar</div>
+                <div className="text-sm font-bold text-[#1a5c3a]">Select your city..</div>
                 <div className="text-[10px] text-gray-400">Apne Pahad ka Bazaar</div>
               </div>
 
-              <div className="relative">
-                <select 
-                  value={tempTownId} 
-                  onChange={(e) => setTempTownId(e.target.value)}
-                  className="w-full appearance-none border border-gray-200 rounded-lg p-2.5 pr-8 text-xs focus:border-[#1a5c3a] outline-none bg-white cursor-pointer"
-                >
-                  <option value="">Select your town...</option>
-                  {allAreas?.map(a => (
-                    <option key={a.id} value={a.id}>{a.name} ({a.district})</option>
-                  ))}
-                </select>
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-[10px]">▼</div>
-              </div>
+              <div className="flex gap-2 items-center w-full">
+                <div className="relative flex-1">
+                  <select 
+                    value={tempTownId} 
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === 'notinlist') {
+                        window.open('https://support.mypahad.in/whyyourtownnotinlist.html', '_blank');
+                        setTempTownId('');
+                      } else {
+                        setTempTownId(val);
+                        const selected = allAreas?.find(a => a.id === val);
+                        if (selected) {
+                          localStorage.setItem('mp_town_selected_v2', 'true');
+                          localStorage.setItem('mp_area', JSON.stringify(selected));
+                          triggerNavigationStart();
+                          router.push(`/${selected.slug}`);
+                        }
+                      }
+                    }}
+                    className="w-full appearance-none border border-gray-200 rounded-lg p-2.5 pr-8 text-xs focus:border-[#1a5c3a] outline-none bg-white cursor-pointer"
+                  >
+                    <option value="">Select your city...</option>
+                    {allAreas?.map(a => (
+                      <option key={a.id} value={a.id}>{a.name} ({a.district})</option>
+                    ))}
+                    <option value="notinlist">Your town not in the list? See why</option>
+                  </select>
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-[10px]">▼</div>
+                </div>
 
-              <div className="flex gap-2">
                 <button 
                   onClick={() => {
                     const selected = allAreas?.find(a => a.id === tempTownId);
                     if (selected) {
                       localStorage.setItem('mp_town_selected_v2', 'true');
                       localStorage.setItem('mp_area', JSON.stringify(selected));
+                      triggerNavigationStart();
                       router.push(`/${selected.slug}`);
                     }
                   }}
                   disabled={!tempTownId}
-                  className="flex-1 bg-[#1a5c3a] text-white border-none p-2.5 rounded-lg text-xs font-semibold cursor-pointer disabled:opacity-35 disabled:cursor-default active:scale-[0.98] transition-all"
+                  className="bg-[#1a5c3a] text-white border-none p-2.5 rounded-lg text-xs font-semibold cursor-pointer disabled:opacity-35 disabled:cursor-default active:scale-[0.98] transition-all flex items-center justify-center w-10 h-10 shrink-0"
+                  title="Enter Bazaar"
                 >
-                  Enter Bazaar
+                  ➔
                 </button>
-                
-                <button 
-                  onClick={() => {
-                    localStorage.setItem('mp_town_selected_v2', 'true');
-                    setShowFullSelector(false);
-                  }}
-                  className="flex-1 bg-gray-100 text-gray-700 border-none p-2.5 rounded-lg text-xs font-semibold cursor-pointer active:scale-[0.98] transition-all"
-                >
-                  Explore Market
-                </button>
-              </div>
-
-              <div className="text-center mt-1">
-                <a 
-                  href="https://support.mypahad.in/whyyourtownnotinlist.html" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="text-[10px] text-gray-400 hover:text-gray-600 underline"
-                >
-                  Your town not in the list? See why
-                </a>
               </div>
             </div>
           </div>
@@ -498,10 +550,7 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
             <div className="flex items-center gap-1.5 min-w-0">
               <span className="text-[#1a5c3a]">📍</span>
               <span className="truncate">
-                {area.slug === 'all' 
-                  ? "Check if your local bazaar is listed or explore all other places."
-                  : `You are viewing ${area.name}. Check if your town is listed or explore other places.`
-                }
+                Check if your local bazaar is listed or explore all other places.
               </span>
             </div>
             <button 
@@ -515,7 +564,7 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
       )}
 
       {/* Stories list */}
-      {area.slug !== 'all' && stories.length > 0 && (
+      {stories.length > 0 && (
         <div className="flex gap-2.5 overflow-x-auto p-2 px-3 bg-white border-b border-[#ddd] no-scrollbar">
           {stories.map(b => (
             <div 
@@ -523,7 +572,7 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
               onClick={() => {
                 triggerNavigationStart();
                 localStorage.setItem('mp_view_biz', b.id);
-                localStorage.setItem('mp_prof_back', `/${area.slug}`);
+                localStorage.setItem('mp_prof_back', area.slug === 'all' ? '/' : `/${area.slug}`);
                 router.push(getBusinessLink(b.username, area.slug));
               }}
               className="shrink-0 text-center w-12 cursor-pointer"
@@ -571,6 +620,21 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
           Services
         </button>
       </div>
+
+      {/* Category Scroll Chips */}
+      {categories.length > 0 && (
+        <div className="flex gap-1.5 overflow-x-auto p-2 px-3 bg-white border-b border-[#ddd] no-scrollbar">
+          {categories.slice(0, 10).map(cat => (
+            <button
+              key={cat.id}
+              onClick={() => openDetailView(cat)}
+              className="shrink-0 whitespace-nowrap px-3 py-1 rounded-full text-[10px] font-medium border border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
+            >
+              {cat.name}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Sponsored Listings */}
       {sponsoredListings.length > 0 && (
@@ -622,8 +686,12 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
             return (
               <div key={cat.id}>
                 <div className="bg-white border-b border-[#ddd] p-2 py-3 mb-2.5">
-                <div className="flex items-center justify-between px-1 mb-2">
-                  <span className="text-[12px] font-bold text-gray-800">{cat.name}</span>
+                <div 
+                  onClick={() => openDetailView(cat)}
+                  className="flex items-center justify-between px-1 mb-2 cursor-pointer group"
+                >
+                  <span className="text-[12px] font-bold text-gray-800 group-hover:text-[#1a5c3a] group-hover:underline">{cat.name}</span>
+                  <span className="text-[10px] text-[#1a5c3a] font-bold opacity-80 group-hover:opacity-100 transition-opacity">View All →</span>
                 </div>
                 
                 {isLoading ? (
@@ -672,12 +740,12 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
                     </div>
                     {listings.length >= 6 && (
                       <div className="flex justify-center mt-3 pt-2.5 border-t border-dashed border-[#ddd] px-1">
-                        <Link 
-                          href={getCategoryLink(cat.slug, area.slug)}
+                        <button 
+                          onClick={() => openDetailView(cat)}
                           className="bg-none border border-[#1a5c3a] text-[#1a5c3a] text-[10px] font-semibold cursor-pointer py-1.5 px-3 rounded w-full hover:bg-[#1a5c3a] hover:text-white transition-colors text-center block"
                         >
                           View More →
-                        </Link>
+                        </button>
                       </div>
                     )}
                   </>
@@ -795,37 +863,6 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
         </div>
       )}
 
-      {/* Bottom Nav */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex z-50 pb-safe">
-        <button 
-          onClick={() => { setActiveTab('home'); setDetailCat(null); }}
-          className={`flex-1 flex flex-col items-center justify-center py-2 px-1 text-[9px] gap-0.5 bg-none border-none ${activeTab === 'home' ? 'text-[#1a5c3a]' : 'text-gray-400'}`}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill={activeTab === 'home' ? 'currentColor' : 'none'} stroke={activeTab === 'home' ? 'none' : 'currentColor'} strokeWidth="2">
-            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
-          </svg>
-          Home
-        </button>
-        <Link 
-          href="/search"
-          className="flex-1 flex flex-col items-center justify-center py-2 px-1 text-[9px] gap-0.5 text-gray-400 hover:text-[#1a5c3a] transition-colors"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <circle cx="11" cy="11" r="8"/>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-          </svg>
-          Search
-        </Link>
-        <Link 
-          href="/search?tab=businesses"
-          className="flex-1 flex flex-col items-center justify-center py-2 px-1 text-[9px] gap-0.5 text-gray-400 hover:text-[#1a5c3a] transition-colors"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
-          </svg>
-          Businesses
-        </Link>
-      </nav>
     </div>
   );
 }

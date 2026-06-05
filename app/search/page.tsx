@@ -187,10 +187,8 @@ function SearchContent() {
           .eq('is_approved', true)
           .eq('is_active', true);
 
-        if (currentArea.slug !== 'all') {
-          lstQuery = lstQuery.eq('businesses.area_id', currentArea.id);
-          bizQuery = bizQuery.eq('area_id', currentArea.id);
-        }
+        lstQuery = lstQuery.eq('businesses.area_id', currentArea.id);
+        bizQuery = bizQuery.eq('area_id', currentArea.id);
 
         const promises: PromiseLike<any>[] = [
           lstQuery.limit(5),
@@ -251,10 +249,8 @@ function SearchContent() {
         .eq('is_approved', true)
         .eq('is_active', true);
 
-      if (currentArea.slug !== 'all') {
-        lstQuery = lstQuery.eq('businesses.area_id', currentArea.id);
-        bizQuery = bizQuery.eq('area_id', currentArea.id);
-      }
+      lstQuery = lstQuery.eq('businesses.area_id', currentArea.id);
+      bizQuery = bizQuery.eq('area_id', currentArea.id);
 
       const promises: PromiseLike<any>[] = [
         lstQuery.limit(20),
@@ -295,9 +291,7 @@ function SearchContent() {
           .eq('businesses.is_active', true)
           .eq('is_available', true);
 
-        if (currentArea.slug !== 'all') {
-          expQuery = expQuery.eq('businesses.area_id', currentArea.id);
-        }
+        expQuery = expQuery.eq('businesses.area_id', currentArea.id);
 
         const { data } = await expQuery.limit(30);
 
@@ -771,38 +765,6 @@ function SearchContent() {
           </p>
         </div>
       )}
-
-      {/* Bottom Nav */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex z-50 pb-safe">
-        <Link 
-          href={currentArea ? `/${currentArea.slug}` : '/'}
-          className="flex-1 flex flex-col items-center justify-center py-2 px-1 text-[9px] gap-0.5 text-gray-400 hover:text-[#1a5c3a] transition-colors"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
-          </svg>
-          Home
-        </Link>
-        <button 
-          onClick={() => { setActiveTab('search'); }}
-          className={`flex-1 flex flex-col items-center justify-center py-2 px-1 text-[9px] gap-0.5 bg-none border-none ${activeTab === 'search' ? 'text-[#1a5c3a]' : 'text-gray-400'}`}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <circle cx="11" cy="11" r="8"/>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-          </svg>
-          Search
-        </button>
-        <button 
-          onClick={() => { setActiveTab('businesses'); }}
-          className={`flex-1 flex flex-col items-center justify-center py-2 px-1 text-[9px] gap-0.5 bg-none border-none ${activeTab === 'businesses' ? 'text-[#1a5c3a]' : 'text-gray-400'}`}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
-          </svg>
-          Businesses
-        </button>
-      </nav>
     </div>
   );
 }

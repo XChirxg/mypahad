@@ -130,7 +130,7 @@ async function resolveSlug(slug: string) {
         .eq('business_id', business.id)
         .order('sort_order');
 
-      // Fetch listings (first 9)
+      // Fetch listings (first 30)
       const { data: listings } = await supabase
         .from('listings')
         .select('*')
@@ -138,7 +138,7 @@ async function resolveSlug(slug: string) {
         .eq('is_available', true)
         .order('is_featured', { ascending: false })
         .order('created_at', { ascending: false })
-        .range(0, 8);
+        .range(0, 29);
 
       // Fetch blog posts
       const { data: posts } = await supabase
@@ -368,7 +368,7 @@ async function resolveSlug(slug: string) {
         .eq('is_available', true)
         .order('is_featured', { ascending: false })
         .order('created_at', { ascending: false })
-        .range(0, 8);
+        .range(0, 29);
 
       const { data: posts } = await supabase
         .from('posts')
@@ -599,15 +599,23 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (result.type === 'profile') {
     const { business } = result;
     const townName = business.areas?.name || '';
+    const isAll = townName.toLowerCase() === 'all';
+    
     const cleanDescription = business.description
       ? business.description.substring(0, 160)
-      : `Shop local products & services from ${business.business_name} in ${townName}.`;
+      : (isAll
+          ? `Shop local products & services from ${business.business_name}.`
+          : `Shop local products & services from ${business.business_name} in ${townName}.`);
+
+    const titleText = isAll
+      ? `${business.business_name} | MyPahad`
+      : `${business.business_name} in ${townName} | MyPahad`;
 
     return {
-      title: `${business.business_name} in ${townName} | MyPahad`,
+      title: titleText,
       description: cleanDescription,
       openGraph: {
-        title: `${business.business_name} in ${townName} | MyPahad`,
+        title: titleText,
         description: cleanDescription,
         images: business.dp_url ? [business.dp_url] : [],
       },
@@ -630,15 +638,23 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const { listing } = result;
     const townName = listing.businesses?.areas?.name || '';
     const sellerName = listing.businesses?.business_name || '';
+    const isAll = townName.toLowerCase() === 'all';
+
     const cleanDescription = listing.description
       ? listing.description.substring(0, 160)
-      : `Buy ${listing.name} from ${sellerName} in ${townName} on MyPahad.`;
+      : (isAll
+          ? `Buy ${listing.name} from ${sellerName} on MyPahad.`
+          : `Buy ${listing.name} from ${sellerName} in ${townName} on MyPahad.`);
+
+    const titleText = isAll
+      ? `${listing.name} - Buy Online | MyPahad`
+      : `${listing.name} - Buy in ${townName} | MyPahad`;
 
     return {
-      title: `${listing.name} - Buy in ${townName} | MyPahad`,
+      title: titleText,
       description: cleanDescription,
       openGraph: {
-        title: `${listing.name} - Buy in ${townName} | MyPahad`,
+        title: titleText,
         description: cleanDescription,
         images: listing.image_url ? [listing.image_url] : [],
       },

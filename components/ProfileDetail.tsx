@@ -906,27 +906,6 @@ export default function ProfileDetail({ business, photos, initialListings, initi
           </div>
         )}
 
-        <nav className="flex z-50 pb-safe">
-          <Link href={business.areas?.slug === 'all' ? '/' : `/${business.areas?.slug || ''}`} className="flex-1 flex flex-col items-center justify-center py-1 text-[9px] gap-0.5 text-gray-400 bg-none border-none">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
-            </svg>
-            Home
-          </Link>
-          <Link href="/search" className="flex-1 flex flex-col items-center justify-center py-1 text-[9px] gap-0.5 text-gray-400 bg-none border-none">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="11" cy="11" r="8"/>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-            Search
-          </Link>
-          <Link href="/search?tab=businesses" className="flex-1 flex flex-col items-center justify-center py-1 text-[9px] gap-0.5 text-gray-400 bg-none border-none">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
-            </svg>
-            Businesses
-          </Link>
-        </nav>
       </div>
     </div>
   );
