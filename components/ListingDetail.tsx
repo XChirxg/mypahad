@@ -525,8 +525,13 @@ export default function ListingDetail({ listing, relatedListings }: ListingDetai
       {/* Top Navbar */}
       <div className="bg-[#1a5c3a] p-2 px-3 flex items-center justify-between gap-2 sticky top-0 z-50 shadow-sm">
         <div className="flex items-center gap-2">
-          <Link href={typeof window !== 'undefined' ? localStorage.getItem('mp_lst_back') || '/' : '/'} className="text-white text-base font-bold tracking-tight" style={{ color: 'white' }}>
-            MyPahad
+          <Link href={typeof window !== 'undefined' ? localStorage.getItem('mp_lst_back') || '/' : '/'} className="text-white text-base font-bold tracking-tight flex items-center gap-1.5" style={{ color: 'white' }}>
+            <svg viewBox="0 0 690 690" className="w-6 h-6 text-white shrink-0" role="img" xmlns="http://www.w3.org/2000/svg">
+              <polygon points="170,480 310,200 450,480" fill="currentColor" opacity="0.18" />
+              <polygon points="310,480 460,240 610,480" fill="currentColor" opacity="0.30" />
+              <polygon points="210,480 370,170 530,480" fill="currentColor" opacity="0.80" />
+            </svg>
+            <span>MyPahad</span>
           </Link>
           {townName && townName.toLowerCase() !== 'all' && (
             <span className="text-[10px] text-white/70 border-l border-white/30 pl-2 leading-none">
@@ -832,8 +837,13 @@ export default function ListingDetail({ listing, relatedListings }: ListingDetai
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#ddd] p-2.5 pb-[calc(10px+env(safe-area-inset-bottom,0))] flex flex-col gap-2 z-50 shadow-lg">
         {/* Warning Banner */}
         {otherBizCartWarning && (
-          <div className="bg-[#fffcf6] border border-[#ffeeba] rounded p-2 text-[10px] text-[#856404] leading-tight">
-            ⚠️ <strong>Not the same business!</strong> You have items in your cart from another business. Buying this will start a new cart list.
+          <div className="bg-[#fffcf6] border border-[#ffeeba] rounded p-2 text-[10px] text-[#856404] leading-tight flex items-start gap-1.5">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-[#856404] shrink-0 mt-0.5">
+              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <span><strong>Not the same business!</strong> You have items in your cart from another business. Buying this will start a new cart list.</span>
           </div>
         )}
         

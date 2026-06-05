@@ -42,10 +42,11 @@ export default async function Home() {
     .neq('slug', 'all')
     .order('name');
 
-  // 5. Fetch stories (active & approved businesses across all areas)
+  // 5. Fetch stories (active & approved businesses from 'all' area)
   const { data: stories } = await supabase
     .from('businesses')
     .select('id, business_name, dp_url, username')
+    .eq('area_id', area.id)
     .eq('is_approved', true)
     .eq('is_active', true)
     .order('hearts', { ascending: false })

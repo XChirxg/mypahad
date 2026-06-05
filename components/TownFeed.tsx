@@ -399,7 +399,14 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
       {/* Top Navbar */}
       <div className="bg-[#1a5c3a] p-2 px-3 flex items-center justify-between gap-2 sticky top-0 z-50 shadow-sm">
         <div className="flex items-center gap-2">
-          <Link href="/" className="text-white text-base font-bold tracking-tight" style={{ color: 'white' }}>MyPahad</Link>
+          <Link href="/" className="text-white text-base font-bold tracking-tight flex items-center gap-1.5" style={{ color: 'white' }}>
+            <svg viewBox="0 0 690 690" className="w-6 h-6 text-white shrink-0" role="img" xmlns="http://www.w3.org/2000/svg">
+              <polygon points="170,480 310,200 450,480" fill="currentColor" opacity="0.18" />
+              <polygon points="310,480 460,240 610,480" fill="currentColor" opacity="0.30" />
+              <polygon points="210,480 370,170 530,480" fill="currentColor" opacity="0.80" />
+            </svg>
+            <span>MyPahad</span>
+          </Link>
           {area.slug !== 'all' && (
             <span className="text-[10px] text-white/60 border-l border-white/20 pl-2 leading-none">
               {area.name}
@@ -523,7 +530,11 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
                     ))}
                     <option value="notinlist">Your town not in the list? See why</option>
                   </select>
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-[10px]">▼</div>
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                      <path d="M6 9l6 6 6-6" />
+                    </svg>
+                  </div>
                 </div>
 
                 <button 
@@ -540,7 +551,10 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
                   className="bg-[#1a5c3a] text-white border-none p-2.5 rounded-lg text-xs font-semibold cursor-pointer disabled:opacity-35 disabled:cursor-default active:scale-[0.98] transition-all flex items-center justify-center w-10 h-10 shrink-0"
                   title="Enter Bazaar"
                 >
-                  ➔
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                  </svg>
                 </button>
               </div>
             </div>
@@ -548,7 +562,10 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
         ) : (
           <div className="bg-white border-b border-[#ddd] p-2.5 px-3 flex items-center justify-between gap-2 shadow-xs text-xs text-gray-600">
             <div className="flex items-center gap-1.5 min-w-0">
-              <span className="text-[#1a5c3a]">📍</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-[#1a5c3a] shrink-0">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                <circle cx="12" cy="10" r="3" />
+              </svg>
               <span className="truncate">
                 Check if your local bazaar is listed or explore all other places.
               </span>
@@ -599,27 +616,7 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
         <AdBanner ad={bannerAds.find(a => a.slot_number === 'banner_top')!} areaSlug={area.slug} />
       )}
 
-      {/* Filter Chips */}
-      <div className="flex gap-1 overflow-x-auto p-2 px-3 bg-white border-b border-[#ddd] no-scrollbar">
-        <button 
-          onClick={() => handleFilterChange(null)}
-          className={`shrink-0 whitespace-nowrap px-2.5 py-1 rounded text-[11px] border border-[#ddd] ${listingType === null ? 'bg-[#1a5c3a] text-white border-[#1a5c3a]' : 'bg-white text-gray-600'}`}
-        >
-          All Type
-        </button>
-        <button 
-          onClick={() => handleFilterChange('product')}
-          className={`shrink-0 whitespace-nowrap px-2.5 py-1 rounded text-[11px] border border-[#ddd] ${listingType === 'product' ? 'bg-[#1a5c3a] text-white border-[#1a5c3a]' : 'bg-white text-gray-600'}`}
-        >
-          Products
-        </button>
-        <button 
-          onClick={() => handleFilterChange('service')}
-          className={`shrink-0 whitespace-nowrap px-2.5 py-1 rounded text-[11px] border border-[#ddd] ${listingType === 'service' ? 'bg-[#1a5c3a] text-white border-[#1a5c3a]' : 'bg-white text-gray-600'}`}
-        >
-          Services
-        </button>
-      </div>
+
 
       {/* Category Scroll Chips */}
       {categories.length > 0 && (

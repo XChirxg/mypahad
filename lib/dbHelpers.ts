@@ -31,28 +31,15 @@ export interface Listing {
 }
 
 export async function getAreaCategories(areaId: string, areaSlug: string, listingType: string | null): Promise<Category[]> {
-  if (areaSlug === 'all') {
-    // Return all categories
-    const { data: categories, error } = await supabase
-      .from('categories')
-      .select('id, name, slug')
-      .order('name');
-    if (error) {
-      console.error('Error fetching general categories:', error);
-      return [];
-    }
-    return categories || [];
-  } else {
-    const { data, error } = await supabase.rpc('get_area_categories', {
-      p_area_id: areaId,
-      p_listing_type: listingType,
-    });
-    if (error) {
-      console.error('Error fetching area categories:', error);
-      return [];
-    }
-    return (data || []).filter((c: any) => c.id && c.name);
+  const { data, error } = await supabase.rpc('get_area_categories', {
+    p_area_id: areaId,
+    p_listing_type: listingType,
+  });
+  if (error) {
+    console.error('Error fetching area categories:', error);
+    return [];
   }
+  return (data || []).filter((c: any) => c.id && c.name);
 }
 
 export async function getRandomizedListings(
@@ -64,44 +51,19 @@ export async function getRandomizedListings(
   limit: number,
   offset: number
 ): Promise<any[]> {
-  if (areaSlug === 'all') {
-    // Fetch directly from listings table, filtering by category (and type)
-    let query = supabase
-      .from('listings')
-      .select('id, name, price, discount_price, image_url, listing_type, business_id, qty_label, is_featured, created_at, businesses!inner(business_name, is_approved, is_active, area_id)')
-      .eq('is_available', true)
-      .eq('category_id', categoryId)
-      .eq('businesses.is_approved', true)
-      .eq('businesses.is_active', true)
-      .order('is_featured', { ascending: false })
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1);
-
-    if (listingType) {
-      query = query.eq('listing_type', listingType);
-    }
-
-    const { data, error } = await query;
-    if (error) {
-      console.error('Error fetching general listings:', error);
-      return [];
-    }
-    return data || [];
-  } else {
-    const { data, error } = await supabase.rpc('get_randomized_listings', {
-      p_area_id: areaId,
-      p_listing_type: listingType,
-      p_category_id: categoryId,
-      p_seed: seed || 'default_seed',
-      p_limit: limit,
-      p_offset: offset,
-    });
-    if (error) {
-      console.error('Error calling get_randomized_listings RPC:', error);
-      return [];
-    }
-    return data || [];
+  const { data, error } = await supabase.rpc('get_randomized_listings', {
+    p_area_id: areaId,
+    p_listing_type: listingType,
+    p_category_id: categoryId,
+    p_seed: seed || 'default_seed',
+    p_limit: limit,
+    p_offset: offset,
+  });
+  if (error) {
+    console.error('Error calling get_randomized_listings RPC:', error);
+    return [];
   }
+  return data || [];
 }
 
 // URL Builders

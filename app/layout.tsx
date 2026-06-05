@@ -53,7 +53,14 @@ export default function RootLayout({
         <footer className="bg-gray-900 text-gray-400 text-xs py-8 px-6 border-t border-gray-800 font-sans mt-auto">
           <div className="max-w-[600px] mx-auto flex flex-col gap-6">
             <div className="flex flex-col gap-2">
-              <span className="text-white font-bold text-sm">🏔 MyPahad</span>
+              <div className="flex items-center gap-1.5 text-white font-bold text-sm">
+                <svg viewBox="0 0 690 690" className="w-5 h-5 text-white shrink-0" role="img" xmlns="http://www.w3.org/2000/svg">
+                  <polygon points="170,480 310,200 450,480" fill="currentColor" opacity="0.18" />
+                  <polygon points="310,480 460,240 610,480" fill="currentColor" opacity="0.30" />
+                  <polygon points="210,480 370,170 530,480" fill="currentColor" opacity="0.80" />
+                </svg>
+                <span>MyPahad</span>
+              </div>
               <p className="text-[11px] text-gray-500 leading-normal">
                 Apne Pahad ka Bazaar. Connect directly with local businesses, sellers, services, and craftsmen across Himachal. Supporting local livelihoods through technology.
               </p>

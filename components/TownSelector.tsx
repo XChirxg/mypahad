@@ -145,7 +145,7 @@ export default function TownSelector({ initialAreas }: TownSelectorProps) {
     );
     
     if (match) {
-      setLocHint(`📍 Detected: ${match.name}, ${match.district}`);
+      setLocHint(`Detected: ${match.name}, ${match.district}`);
       setLocCallback(() => () => preselectArea(match));
       preselectArea(match);
       return;
@@ -167,7 +167,7 @@ export default function TownSelector({ initialAreas }: TownSelectorProps) {
       setTowns([]);
       setSelectedTownId('');
       setSelectedArea(null);
-      setLocHint(`📍 Detected state: ${stateMatch}`);
+      setLocHint(`Detected state: ${stateMatch}`);
     } else {
       setLocHint('');
     }
@@ -279,7 +279,11 @@ export default function TownSelector({ initialAreas }: TownSelectorProps) {
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
-            <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-xs">▼</div>
+            <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </div>
           </div>
 
           <div className="relative">
@@ -294,7 +298,11 @@ export default function TownSelector({ initialAreas }: TownSelectorProps) {
                 <option key={d} value={d}>{d}</option>
               ))}
             </select>
-            <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-xs">▼</div>
+            <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </div>
           </div>
 
           <div className="relative">
@@ -309,7 +317,11 @@ export default function TownSelector({ initialAreas }: TownSelectorProps) {
                 <option key={t.id} value={t.id}>{t.name}</option>
               ))}
             </select>
-            <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-xs">▼</div>
+            <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </div>
           </div>
         </div>
 
@@ -317,7 +329,10 @@ export default function TownSelector({ initialAreas }: TownSelectorProps) {
         <div className="min-h-5 flex items-center gap-1.5 text-[11px] text-gray-400 mb-3 px-0.5">
           {locHint && (
             <>
-              <span className={`w-1.5 h-1.5 rounded-full bg-[#1a5c3a] shrink-0 ${locLoading ? 'animate-pulse' : ''}`}></span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-[#1a5c3a] shrink-0">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                <circle cx="12" cy="10" r="3" />
+              </svg>
               {locCallback ? (
                 <span onClick={locCallback} className="text-[#1a5c3a] cursor-pointer underline decoration-dotted underline-offset-2">
                   {locHint}
