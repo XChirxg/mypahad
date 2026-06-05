@@ -532,7 +532,7 @@ export default function ProfileDetail({ business, photos, initialListings, initi
             </svg>
             <span>MyPahad</span>
           </Link>
-          {townName && (
+          {townName && townName.toLowerCase() !== 'all' && townName.toLowerCase() !== 'mypahad' && (
             <span className="text-[10px] text-white/70 border-l border-white/30 pl-2 leading-none">
               {townName}
             </span>
@@ -598,7 +598,7 @@ export default function ProfileDetail({ business, photos, initialListings, initi
             </div>
             
             <div className="text-[10px] text-gray-400 mt-0.5">
-              {business.categories?.name} · {townName}
+              {business.categories?.name}{(townName && townName.toLowerCase() !== 'all' && townName.toLowerCase() !== 'mypahad') ? ` · ${townName}` : ''}
             </div>
           </div>
         </div>

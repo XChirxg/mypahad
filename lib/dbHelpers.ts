@@ -69,7 +69,7 @@ export async function getRandomizedListings(
 // URL Builders
 export function getBusinessLink(username: string | null | undefined, areaSlug: string): string {
   const u = username || 'shop';
-  if (areaSlug === 'all') {
+  if (areaSlug === 'all' || areaSlug === 'mypahad' || areaSlug === 'other') {
     return `/${u}`;
   }
   return `/${u}-in-${areaSlug}`;
@@ -77,7 +77,7 @@ export function getBusinessLink(username: string | null | undefined, areaSlug: s
 
 export function getListingLink(username: string | null | undefined, prodSlug: string, areaSlug: string): string {
   const u = username || 'shop';
-  if (areaSlug === 'all') {
+  if (areaSlug === 'all' || areaSlug === 'mypahad' || areaSlug === 'other') {
     return `/${u}-${prodSlug}`;
   }
   return `/${u}-${prodSlug}-in-${areaSlug}`;
@@ -85,14 +85,14 @@ export function getListingLink(username: string | null | undefined, prodSlug: st
 
 export function getPostLink(username: string | null | undefined, postSlug: string, areaSlug: string): string {
   const u = username || 'shop';
-  if (areaSlug === 'all') {
+  if (areaSlug === 'all' || areaSlug === 'mypahad' || areaSlug === 'other') {
     return `/${u}-post-${postSlug}`;
   }
   return `/${u}-post-${postSlug}-in-${areaSlug}`;
 }
 
 export function getCategoryLink(categorySlug: string, areaSlug: string): string {
-  if (areaSlug === 'all') {
+  if (areaSlug === 'all' || areaSlug === 'mypahad' || areaSlug === 'other') {
     return `/${categorySlug}`;
   }
   return `/${categorySlug}-in-${areaSlug}`;

@@ -71,7 +71,7 @@ export default function AdBanner({ ad, areaSlug }: AdBannerProps) {
             .replace(/-+$/, '');
             
           localStorage.setItem('mp_view_lst', JSON.stringify(l));
-          localStorage.setItem('mp_lst_back', areaSlug === 'all' ? '/' : `/${areaSlug}`);
+          localStorage.setItem('mp_lst_back', (areaSlug === 'mypahad' || areaSlug === 'all') ? '/' : `/${areaSlug}`);
           
           triggerNavigationStart();
           router.push(getListingLink(username, cleanName, areaSlug));

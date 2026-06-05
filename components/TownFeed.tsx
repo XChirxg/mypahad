@@ -407,17 +407,17 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
             </svg>
             <span>MyPahad</span>
           </Link>
-          {area.slug !== 'all' && (
+          {area.slug !== 'mypahad' && area.slug !== 'all' && (
             <span className="text-[10px] text-white/60 border-l border-white/20 pl-2 leading-none">
               {area.name}
             </span>
           )}
         </div>
         <div className="flex items-center gap-3">
-          {!(area.slug === 'all' && showFullSelector) && (
+          {!((area.slug === 'mypahad' || area.slug === 'all') && showFullSelector) && (
             <button 
               onClick={() => {
-                if (area.slug === 'all') {
+                if (area.slug === 'mypahad' || area.slug === 'all') {
                   setShowFullSelector(true);
                 } else {
                   router.push('/');
@@ -493,7 +493,7 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
       </div>
 
       {/* Town Selection Header / Banner */}
-      {activeTab === 'home' && area.slug === 'all' && (
+      {activeTab === 'home' && (area.slug === 'mypahad' || area.slug === 'all') && (
         showFullSelector ? (
           <div className="bg-white border-b border-[#ddd] p-4 flex flex-col items-center justify-center font-sans">
             <div className="w-full max-w-[360px] flex flex-col gap-2">
@@ -589,7 +589,7 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
               onClick={() => {
                 triggerNavigationStart();
                 localStorage.setItem('mp_view_biz', b.id);
-                localStorage.setItem('mp_prof_back', area.slug === 'all' ? '/' : `/${area.slug}`);
+                localStorage.setItem('mp_prof_back', (area.slug === 'mypahad' || area.slug === 'all') ? '/' : `/${area.slug}`);
                 router.push(getBusinessLink(b.username, area.slug));
               }}
               className="shrink-0 text-center w-12 cursor-pointer"
@@ -688,7 +688,7 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
                   className="flex items-center justify-between px-1 mb-2 cursor-pointer group"
                 >
                   <span className="text-[12px] font-bold text-gray-800 group-hover:text-[#1a5c3a] group-hover:underline">{cat.name}</span>
-                  <span className="text-[10px] text-[#1a5c3a] font-bold opacity-80 group-hover:opacity-100 transition-opacity">View All →</span>
+                  <span className="text-[10px] text-[#e05a2b] font-bold opacity-90 group-hover:opacity-100 transition-opacity">View All →</span>
                 </div>
                 
                 {isLoading ? (
@@ -739,7 +739,7 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
                       <div className="flex justify-center mt-3 pt-2.5 border-t border-dashed border-[#ddd] px-1">
                         <button 
                           onClick={() => openDetailView(cat)}
-                          className="bg-none border border-[#1a5c3a] text-[#1a5c3a] text-[10px] font-semibold cursor-pointer py-1.5 px-3 rounded w-full hover:bg-[#1a5c3a] hover:text-white transition-colors text-center block"
+                          className="bg-[#e05a2b] border-none text-white text-[10px] font-bold cursor-pointer py-2 px-3 rounded-lg w-full hover:bg-[#c94f24] active:scale-[0.98] transition-all text-center block shadow-xs"
                         >
                           View More →
                         </button>

@@ -71,7 +71,6 @@ export default function RootLayout({
                 <span className="text-white font-semibold text-[11px] uppercase tracking-wider text-gray-300">Quick Links</span>
                 <Link href="/" className="hover:text-white transition-colors">Home Market</Link>
                 <Link href="/search" className="hover:text-white transition-colors">Search Bazaar</Link>
-                <a href="/sitemap.xml" target="_blank" className="hover:text-white transition-colors">Sitemap</a>
               </div>
               <div className="flex flex-col gap-2">
                 <span className="text-white font-semibold text-[11px] uppercase tracking-wider text-gray-300">Support</span>

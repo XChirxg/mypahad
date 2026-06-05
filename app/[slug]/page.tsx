@@ -42,7 +42,23 @@ async function resolveSlug(slug: string) {
     };
   }
 
-  if (decodedSlug === 'all') {
+  if (decodedSlug.endsWith('-in-mypahad')) {
+    const cleanSlug = decodedSlug.substring(0, decodedSlug.length - 11);
+    return {
+      type: 'redirect' as const,
+      destination: `/${cleanSlug}`,
+    };
+  }
+
+  if (decodedSlug.endsWith('-in-other')) {
+    const cleanSlug = decodedSlug.substring(0, decodedSlug.length - 9);
+    return {
+      type: 'redirect' as const,
+      destination: `/${cleanSlug}`,
+    };
+  }
+
+  if (decodedSlug === 'all' || decodedSlug === 'mypahad') {
     return {
       type: 'redirect' as const,
       destination: '/',
@@ -65,7 +81,7 @@ async function resolveSlug(slug: string) {
 
     if (!area) return null;
 
-    if (area.slug === 'all') {
+    if (area.slug === 'all' || area.slug === 'mypahad') {
       return {
         type: 'redirect' as const,
         destination: '/',
@@ -301,7 +317,7 @@ async function resolveSlug(slug: string) {
     .single();
 
   if (area) {
-    if (area.slug === 'all') {
+    if (area.slug === 'all' || area.slug === 'mypahad') {
       return {
         type: 'redirect' as const,
         destination: '/',
@@ -347,13 +363,13 @@ async function resolveSlug(slug: string) {
 
   const { data: biz } = await supabase
     .from('businesses')
-    .select('id, username, areas(id, name, slug)')
+    .select('*, areas(id, name, slug), categories(name)')
     .eq('username', usernameClean)
     .single();
 
   if (biz && biz.areas) {
     const areaSlug = (biz.areas as any).slug;
-    if (areaSlug === 'all') {
+    if (areaSlug === 'all' || areaSlug === 'mypahad' || areaSlug === 'other') {
       // Resolve it as a business profile directly!
       const { data: photos } = await supabase
         .from('business_photos')
@@ -394,13 +410,23 @@ async function resolveSlug(slug: string) {
     }
   }
 
-  // B3. Check if it matches a listing or blog post for a business in the "All" area
-  const { data: allAreaBusinesses } = await supabase
-    .from('businesses')
-    .select('id, username, business_name, whatsapp, dp_url, area_id, category_id, latitude, longitude, delivery_charges')
-    .eq('area_id', 'a46763ea-4cfd-4336-aad0-e61163f5d430') // 'all' area ID
-    .eq('is_approved', true)
-    .eq('is_active', true);
+  // B3. Check if it matches a listing or blog post for a business in clean URL areas (mypahad, other, all)
+  const { data: cleanAreas } = await supabase
+    .from('areas')
+    .select('id, name, slug')
+    .in('slug', ['mypahad', 'other', 'all']);
+  const cleanAreaIds = cleanAreas ? cleanAreas.map(a => a.id) : [];
+
+  let allAreaBusinesses = null;
+  if (cleanAreaIds.length > 0) {
+    const { data } = await supabase
+      .from('businesses')
+      .select('id, username, business_name, whatsapp, dp_url, area_id, category_id, latitude, longitude, delivery_charges')
+      .in('area_id', cleanAreaIds)
+      .eq('is_approved', true)
+      .eq('is_active', true);
+    allAreaBusinesses = data;
+  }
 
   if (allAreaBusinesses) {
     const sortedBizs = [...allAreaBusinesses].sort(
@@ -411,6 +437,7 @@ async function resolveSlug(slug: string) {
       const username = (biz.username || '').toLowerCase();
       if (username && decodedSlug.startsWith(username + '-')) {
         const productSlug = decodedSlug.substring(username.length + 1);
+        const bizArea = cleanAreas?.find(a => a.id === biz.area_id);
 
         // Check for blog post (e.g. zicafe-post-grand-opening)
         if (productSlug.startsWith('post-')) {
@@ -436,8 +463,8 @@ async function resolveSlug(slug: string) {
               business: {
                 ...biz,
                 areas: {
-                  name: 'All',
-                  slug: 'all'
+                  name: bizArea?.name || 'MyPahad',
+                  slug: bizArea?.slug || 'mypahad'
                 }
               },
               listings: listings || [],
@@ -463,8 +490,8 @@ async function resolveSlug(slug: string) {
               businesses: {
                 ...biz,
                 areas: {
-                  name: 'All',
-                  slug: 'all',
+                  name: bizArea?.name || 'MyPahad',
+                  slug: bizArea?.slug || 'mypahad',
                 },
               },
             };
@@ -513,7 +540,7 @@ async function resolveSlug(slug: string) {
     }
   }
 
-  // B4. Check if it matches a category slug in "All"
+  // B4. Check if it matches a category slug in "mypahad"
   const { data: category } = await supabase
     .from('categories')
     .select('*')
@@ -521,12 +548,22 @@ async function resolveSlug(slug: string) {
     .single();
 
   if (category) {
-    const { data: allArea } = await supabase
+    let { data: allArea } = await supabase
       .from('areas')
       .select('*')
-      .eq('slug', 'all')
+      .eq('slug', 'mypahad')
       .eq('is_active', true)
       .single();
+
+    if (!allArea) {
+      const { data: fallbackArea } = await supabase
+        .from('areas')
+        .select('*')
+        .eq('slug', 'all')
+        .eq('is_active', true)
+        .single();
+      allArea = fallbackArea;
+    }
 
     if (allArea) {
       const listings = await getRandomizedListings(
@@ -599,7 +636,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (result.type === 'profile') {
     const { business } = result;
     const townName = business.areas?.name || '';
-    const isAll = townName.toLowerCase() === 'all';
+    const isAll = townName.toLowerCase() === 'all' || townName.toLowerCase() === 'mypahad';
     
     const cleanDescription = business.description
       ? business.description.substring(0, 160)
@@ -638,7 +675,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const { listing } = result;
     const townName = listing.businesses?.areas?.name || '';
     const sellerName = listing.businesses?.business_name || '';
-    const isAll = townName.toLowerCase() === 'all';
+    const isAll = townName.toLowerCase() === 'all' || townName.toLowerCase() === 'mypahad';
 
     const cleanDescription = listing.description
       ? listing.description.substring(0, 160)
@@ -699,7 +736,7 @@ export default async function SlugPage({ params }: PageProps) {
       .from('areas')
       .select('id, name, slug, state, district, is_active')
       .eq('is_active', true)
-      .neq('slug', 'all')
+      .not('slug', 'in', '("mypahad","all")')
       .order('name');
 
     return (

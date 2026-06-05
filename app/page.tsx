@@ -5,13 +5,24 @@ import { getAreaCategories } from '@/lib/dbHelpers';
 export const revalidate = 3600; // Cache landing page and static links for 1 hour
 
 export default async function Home() {
-  // 1. Fetch the "All" area
-  const { data: area } = await supabase
+  // 1. Fetch the "mypahad" area
+  let { data: area } = await supabase
     .from('areas')
     .select('*')
-    .eq('slug', 'all')
+    .eq('slug', 'mypahad')
     .eq('is_active', true)
     .single();
+
+  if (!area) {
+    // Fallback to "all"
+    const { data: fallbackArea } = await supabase
+      .from('areas')
+      .select('*')
+      .eq('slug', 'all')
+      .eq('is_active', true)
+      .single();
+    area = fallbackArea;
+  }
 
   if (!area) {
     return (
@@ -21,10 +32,10 @@ export default async function Home() {
     );
   }
 
-  // 2. Fetch categories for "all" area
+  // 2. Fetch categories for area
   const categories = await getAreaCategories(area.id, area.slug, null);
 
-  // 3. Fetch active ads for "all" area
+  // 3. Fetch active ads for area
   const now = new Date().toISOString();
   const { data: ads } = await supabase
     .from('ads')
@@ -34,12 +45,12 @@ export default async function Home() {
     .lte('starts_at', now)
     .gte('ends_at', now);
 
-  // 4. Fetch other active areas (excluding 'all') for the selector
+  // 4. Fetch other active areas (excluding 'mypahad' and 'all') for the selector
   const { data: otherAreas } = await supabase
     .from('areas')
     .select('id, name, slug, state, district, is_active')
     .eq('is_active', true)
-    .neq('slug', 'all')
+    .not('slug', 'in', '("mypahad","all")')
     .order('name');
 
   // 5. Fetch stories (active & approved businesses from 'all' area)

@@ -146,7 +146,7 @@ function SearchContent() {
         .eq('is_approved', true)
         .eq('is_active', true);
       
-      if (currentArea.slug !== 'all') {
+      if (currentArea.slug !== 'mypahad' && currentArea.slug !== 'all') {
         queryBuilder = queryBuilder.eq('area_id', currentArea.id);
       }
 
@@ -195,13 +195,13 @@ function SearchContent() {
           bizQuery.limit(3)
         ];
 
-        if (currentArea.slug === 'all') {
+        if (currentArea.slug === 'mypahad' || currentArea.slug === 'all') {
           promises.push(
             supabase
               .from('areas')
               .select('id, name, slug, state, district')
               .eq('is_active', true)
-              .neq('slug', 'all')
+              .not('slug', 'in', '("mypahad","all")')
               .ilike('name', `%${q}%`)
               .limit(3)
           );
@@ -211,7 +211,7 @@ function SearchContent() {
 
         setQuickLstResults((results[0].data as unknown as Listing[]) || []);
         setQuickBizResults((results[1].data as unknown as Business[]) || []);
-        if (currentArea.slug === 'all') {
+        if (currentArea.slug === 'mypahad' || currentArea.slug === 'all') {
           setQuickAreaResults(results[2]?.data || []);
         } else {
           setQuickAreaResults([]);
@@ -257,13 +257,13 @@ function SearchContent() {
         bizQuery.limit(10)
       ];
 
-      if (currentArea.slug === 'all') {
+      if (currentArea.slug === 'mypahad' || currentArea.slug === 'all') {
         promises.push(
           supabase
             .from('areas')
             .select('id, name, slug, state, district')
             .eq('is_active', true)
-            .neq('slug', 'all')
+            .not('slug', 'in', '("mypahad","all")')
             .ilike('name', `%${q}%`)
             .limit(5)
         );
@@ -276,14 +276,14 @@ function SearchContent() {
 
       setLstResults(lsts);
       setBizResults(bizs);
-      if (currentArea.slug === 'all') {
+      if (currentArea.slug === 'mypahad' || currentArea.slug === 'all') {
         setAreaResults(results[2]?.data || []);
       } else {
         setAreaResults([]);
       }
 
       // Fetch explore products if no search results found
-      if (lsts.length === 0 && bizs.length === 0 && (currentArea.slug !== 'all' || (results[2]?.data || []).length === 0)) {
+      if (lsts.length === 0 && bizs.length === 0 && (currentArea.slug !== 'mypahad' && currentArea.slug !== 'all' || (results[2]?.data || []).length === 0)) {
         let expQuery = supabase
           .from('listings')
           .select('id, name, price, discount_price, image_url, listing_type, description, business_id, businesses!inner(id, business_name, username, area_id, is_approved, is_active, areas(slug))')
@@ -372,8 +372,8 @@ function SearchContent() {
   };
 
   const renderSrpRow = (l: Listing) => {
-    const isAllArea = currentArea?.slug === 'all';
-    const townText = (isAllArea && l.businesses?.areas?.slug !== 'all' && l.businesses?.areas?.name) ? ` (in ${l.businesses.areas.name})` : '';
+    const isAllArea = currentArea?.slug === 'mypahad' || currentArea?.slug === 'all';
+    const townText = (isAllArea && l.businesses?.areas?.slug !== 'mypahad' && l.businesses?.areas?.slug !== 'all' && l.businesses?.areas?.name) ? ` (in ${l.businesses.areas.name})` : '';
     return (
       <div 
         key={l.id} 
@@ -484,8 +484,8 @@ function SearchContent() {
                           <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest p-1.5 px-3.5 bg-gray-50 border-b border-gray-100">Businesses</div>
                           {quickBizResults.map(b => {
                             const claimed = b.user_id !== null;
-                            const isAllArea = currentArea?.slug === 'all';
-                            const townText = (isAllArea && b.areas?.slug !== 'all' && b.areas?.name) ? ` (in ${b.areas.name})` : '';
+                            const isAllArea = currentArea?.slug === 'mypahad' || currentArea?.slug === 'all';
+                            const townText = (isAllArea && b.areas?.slug !== 'mypahad' && b.areas?.slug !== 'all' && b.areas?.name) ? ` (in ${b.areas.name})` : '';
                             return (
                               <div 
                                 key={b.id} 
@@ -526,8 +526,8 @@ function SearchContent() {
                         <>
                           <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest p-1.5 px-3.5 bg-gray-50 border-b border-gray-100">Listings</div>
                           {quickLstResults.map(l => {
-                            const isAllArea = currentArea?.slug === 'all';
-                            const townText = (isAllArea && l.businesses?.areas?.slug !== 'all' && l.businesses?.areas?.name) ? ` (in ${l.businesses.areas.name})` : '';
+                            const isAllArea = currentArea?.slug === 'mypahad' || currentArea?.slug === 'all';
+                            const townText = (isAllArea && l.businesses?.areas?.slug !== 'mypahad' && l.businesses?.areas?.slug !== 'all' && l.businesses?.areas?.name) ? ` (in ${l.businesses.areas.name})` : '';
                             return (
                               <div 
                                 key={l.id} 
@@ -710,8 +710,8 @@ function SearchContent() {
                   <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest p-2 px-3.5 bg-gray-50 border-b border-gray-150">Businesses ({bizResults.length})</div>
                   {bizResults.map(b => {
                     const claimed = b.user_id !== null;
-                    const isAllArea = currentArea?.slug === 'all';
-                    const townText = (isAllArea && b.areas?.slug !== 'all' && b.areas?.name) ? ` (in ${b.areas.name})` : '';
+                    const isAllArea = currentArea?.slug === 'mypahad' || currentArea?.slug === 'all';
+                    const townText = (isAllArea && b.areas?.slug !== 'mypahad' && b.areas?.slug !== 'all' && b.areas?.name) ? ` (in ${b.areas.name})` : '';
                     return (
                       <div 
                         key={b.id} 

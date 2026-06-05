@@ -231,7 +231,7 @@ export default function CategoryDetail({
         <span className="text-white text-sm font-bold truncate max-w-[200px]">
           {category.name}
         </span>
-        <Link href={area.slug === 'all' ? '/' : `/${area.slug}`} className="text-white text-xs font-semibold opacity-80 hover:opacity-100 transition-opacity" style={{ color: 'white' }}>
+        <Link href={(area.slug === 'mypahad' || area.slug === 'all') ? '/' : `/${area.slug}`} className="text-white text-xs font-semibold opacity-80 hover:opacity-100 transition-opacity" style={{ color: 'white' }}>
           MyPahad
         </Link>
       </div>
@@ -239,8 +239,8 @@ export default function CategoryDetail({
       <div className="max-w-[1100px] mx-auto">
         {/* Breadcrumb Row */}
         <div className="p-2 px-3.5 bg-white border-b border-gray-200 text-[10px] text-gray-400 flex items-center gap-1.5 flex-wrap">
-          <Link href={area.slug === 'all' ? '/' : `/${area.slug}`} className="text-[#1a5c3a] hover:underline">
-            {area.slug === 'all' ? 'All MyPahad' : area.name}
+          <Link href={(area.slug === 'mypahad' || area.slug === 'all') ? '/' : `/${area.slug}`} className="text-[#1a5c3a] hover:underline">
+            {(area.slug === 'mypahad' || area.slug === 'all') ? 'All MyPahad' : area.name}
           </Link>
           <span>›</span>
           <span className="text-gray-600 font-medium">{category.name}</span>
@@ -399,7 +399,7 @@ export default function CategoryDetail({
       {/* Bottom Nav */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex z-50 pb-safe">
         <Link
-          href={area.slug === 'all' ? '/' : `/${area.slug}`}
+          href={(area.slug === 'mypahad' || area.slug === 'all') ? '/' : `/${area.slug}`}
           className="flex-1 flex flex-col items-center justify-center py-2 px-1 text-[9px] gap-0.5 text-gray-400 hover:text-[#1a5c3a] transition-colors"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
