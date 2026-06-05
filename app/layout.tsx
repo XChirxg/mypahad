@@ -62,7 +62,7 @@ export default function RootLayout({
                 <span>MyPahad</span>
               </div>
               <p className="text-[11px] text-gray-500 leading-normal">
-                Apne Pahad ka Bazaar. Connect directly with local businesses, sellers, services, and craftsmen across Himachal. Supporting local livelihoods through technology.
+                Apne Pahad ka Bazaar. Connect directly with local businesses, sellers, services, and craftsmen across Pahad. Supporting local livelihoods through technology.
               </p>
             </div>
             

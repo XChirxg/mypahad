@@ -533,7 +533,7 @@ export default function ListingDetail({ listing, relatedListings }: ListingDetai
             </svg>
             <span>MyPahad</span>
           </Link>
-          {townName && townName.toLowerCase() !== 'all' && townName.toLowerCase() !== 'mypahad' && (
+          {townName && townName.toLowerCase() !== 'all' && townName.toLowerCase() !== 'mypahad' && townName.toLowerCase() !== 'other' && (
             <span className="text-[10px] text-white/70 border-l border-white/30 pl-2 leading-none">
               {townName}
             </span>
@@ -597,313 +597,338 @@ export default function ListingDetail({ listing, relatedListings }: ListingDetai
       </div>
 
       {/* Main Listing Detail Body */}
-      <div className="bg-white p-3.5">
-        {/* Image Display */}
-        <div className="relative mb-3 bg-white">
-          {listing.image_url ? (
-            <img src={getOptimizedImageUrl(listing.image_url, 'detail')} alt={listing.name} className="w-full aspect-square object-cover rounded-lg border border-[#e5e7eb] shadow-sm" />
-          ) : (
-            <div className="w-full aspect-square bg-[#e8f5ee] rounded-lg border border-[#e5e7eb] flex items-center justify-center">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" strokeWidth="1">
-                <rect x="3" y="3" width="18" height="18" rx="2"/>
-                <circle cx="8.5" cy="8.5" r="1.5"/>
-                <polyline points="21 15 16 10 5 21"/>
-              </svg>
-            </div>
-          )}
-          {listing.image_url && <div className="text-[8.5px] text-gray-400 mt-1 text-center italic opacity-75">*Image may not represent actual product</div>}
-          
-          {listing.has_delivery && (
-            <div className="absolute top-5 right-5 bg-[#1a5c3a]/90 text-white px-2 py-1 rounded text-[9px] font-bold shadow-md flex items-center gap-1 backdrop-blur-[2px]">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="1" y="3" width="15" height="13"/>
-                <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
-                <circle cx="5.5" cy="18.5" r="2.5"/>
-                <circle cx="18.5" cy="18.5" r="2.5"/>
-              </svg>
-              Home Delivery Available
-            </div>
-          )}
-        </div>
-
-        {/* Listing Title */}
-        <h1 className="text-base font-bold text-gray-900 leading-tight">{listing.name}</h1>
-        
-        {/* Pricing block */}
-        {listing.discount_price ? (
-          <div className="flex items-center gap-2 mt-1.5 mb-2">
-            <span className="text-[#e05a2b] font-bold text-lg">₹{listing.discount_price}</span>
-            <span className="line-through text-gray-400 text-sm">₹{listing.price}</span>
-            {discountBadge}
-          </div>
-        ) : (
-          listing.price && <div className="text-[#1a5c3a] font-bold text-lg mt-1 mb-2">₹{listing.price}</div>
-        )}
-
-        {/* Description */}
-        {listing.description && (
-          <div className="text-[12px] text-gray-600 leading-relaxed mt-2 pt-2 border-t border-gray-100">
-            <span>
-              {isDescExpanded
-                ? listing.description
-                : listing.description.length > 180
-                ? listing.description.substring(0, 180) + '...'
-                : listing.description}
-            </span>
-            {listing.description.length > 180 && (
-              <button
-                onClick={() => setIsDescExpanded(!isDescExpanded)}
-                className="text-[#1a5c3a] font-bold ml-1 text-[11px] hover:underline bg-none border-none p-0 cursor-pointer inline-block"
-              >
-                {isDescExpanded ? 'Read Less' : 'Read More'}
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Booking required fields */}
-        {listing.booking_required && (
-          <div className="mt-4 p-3 bg-[#e8f5ee] border border-[#ddd] rounded-lg">
-            <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2">Booking Information Required</div>
-            <div className="flex gap-2.5">
-              <div className="flex-1">
-                <label className="text-[10px] text-gray-500 font-semibold mb-1 block">Date</label>
-                <input 
-                  type="date" 
-                  value={bookingDate}
-                  onChange={(e) => setBookingDate(e.target.value)}
-                  className="w-full p-2 border border-[#ddd] rounded text-xs" 
-                />
-              </div>
-              <div className="flex-1">
-                <label className="text-[10px] text-gray-500 font-semibold mb-1 block">Time</label>
-                <input 
-                  type="time" 
-                  value={bookingTime}
-                  onChange={(e) => setBookingTime(e.target.value)}
-                  className="w-full p-2 border border-[#ddd] rounded text-xs" 
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Quantities & Options Selector */}
-        {vars.length > 0 ? (
-          <div className="mt-4">
-            <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2">Options / Sizes (Select Quantity)</div>
-            <div className="flex flex-col gap-2">
-              {vars.map((v, idx) => {
-                const vObj = typeof v === 'string' ? parseLegacyVariant(v) : v;
-                const qtyVal = quantities[`var-${idx}`] || 0;
-                
-                let optionPriceText = null;
-                if (vObj.discount_price !== null && vObj.discount_price !== undefined) {
-                  const o = parseFloat(vObj.price) || 0;
-                  const d = parseFloat(vObj.discount_price) || 0;
-                  let offBadge = null;
-                  if (o > 0 && d > 0 && o > d) {
-                    const pct = Math.round(((o - d) / o) * 100);
-                    offBadge = <span className="bg-[#e05a2b] text-white text-[7px] font-bold px-1 py-0.5 rounded ml-1">{pct}% OFF</span>;
-                  }
-                  optionPriceText = (
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className="text-[#e05a2b] font-bold text-[11px]">₹{vObj.discount_price}</span>
-                      <span className="line-through text-gray-400 text-[10px]">₹{vObj.price}</span>
-                      {offBadge}
-                    </div>
-                  );
-                } else if (vObj.price) {
-                  optionPriceText = <div className="text-gray-500 font-semibold text-[11px]">₹{vObj.price}</div>;
-                }
-
-                return (
-                  <div key={idx} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-none">
-                    <div>
-                      <div className="text-xs font-semibold text-gray-700">{vObj.name}</div>
-                      {optionPriceText}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => adjustQty(`var-${idx}`, -1)} className="w-6 h-6 rounded-full border border-[#ddd] bg-white flex items-center justify-center text-xs font-bold active:bg-gray-100">-</button>
-                      <span className="text-xs font-semibold w-4 text-center">{qtyVal}</span>
-                      <button onClick={() => adjustQty(`var-${idx}`, 1)} className="w-6 h-6 rounded-full border border-[#ddd] bg-white flex items-center justify-center text-xs font-bold active:bg-gray-100">+</button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ) : (
-          <div className="mt-4 flex justify-between items-center p-2.5 bg-[#e8f5ee] rounded-lg">
-            <span className="text-xs font-bold text-gray-700">{listing.qty_label || 'Quantity'}</span>
-            <div className="flex items-center gap-2.5">
-              <button onClick={() => adjustQty('main', -1)} className="w-6 h-6 rounded-full border border-[#ddd] bg-white flex items-center justify-center text-xs font-bold active:bg-gray-100">-</button>
-              <span className="text-xs font-semibold w-4 text-center">{quantities['main'] || 0}</span>
-              <button onClick={() => adjustQty('main', 1)} className="w-6 h-6 rounded-full border border-[#ddd] bg-white flex items-center justify-center text-xs font-bold active:bg-gray-100">+</button>
-            </div>
-          </div>
-        )}
-        
-        {/* Inline Actions Row (Cart & Buy Now) */}
-        <div className="mt-4 flex flex-col gap-2 pt-3 border-t border-gray-150">
-          {/* Warning Banner */}
-          {otherBizCartWarning && (
-            <div className="bg-[#fffcf6] border border-[#ffeeba] rounded-lg p-2.5 text-[10px] text-[#856404] leading-tight flex items-start gap-1.5">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-[#856404] shrink-0 mt-0.5">
-                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-                <line x1="12" y1="9" x2="12" y2="13"/>
-                <line x1="12" y1="17" x2="12.01" y2="17"/>
-              </svg>
-              <span><strong>Not the same business!</strong> You have items in your cart from another business. Buying this will start a new cart list.</span>
-            </div>
-          )}
-          
-          {/* Mini Cart Display */}
-          {cartItems.length > 0 && !miniCartClosed && (
-            <div className="bg-gray-50 rounded-lg p-2.5 border border-gray-200 flex flex-col gap-1.5 max-h-[140px] overflow-y-auto mb-2">
-              <div className="flex justify-between items-center pb-1.5 border-b border-gray-200 mb-1">
-                <span className="text-[10px] font-bold text-[#1a5c3a] flex items-center gap-1">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-                  </svg>
-                  Current Cart Items
-                </span>
-                <button onClick={() => setMiniCartClosed(true)} className="text-gray-400 hover:text-gray-600 font-bold text-xs px-1">&times;</button>
-              </div>
-              <div className="flex flex-col gap-1">
-                {cartItems.map((item, i) => (
-                  <div key={i} className="flex justify-between items-center text-[10px] py-0.5">
-                    <div className="flex items-center gap-1 min-w-0">
-                      <button onClick={(e) => removeMiniCartItem(e, item.id, item.variant)} className="text-[#e05a2b] font-bold text-sm px-1">&times;</button>
-                      <span 
-                        onClick={() => {
-                          if (item.id !== listing.id) {
-                            triggerNavigationStart();
-                            router.push(`/listing/${item.id}`);
-                          }
-                        }}
-                        className={`truncate font-medium ${item.id !== listing.id ? 'underline text-[#1a5c3a] cursor-pointer' : 'text-gray-700'}`}
-                      >
-                        {item.name} {item.variant ? `(${item.variant})` : ''}
-                      </span>
-                    </div>
-                    <span className="font-bold text-[#1a5c3a] shrink-0 ml-2">₹{item.price}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="flex gap-2 w-full">
-            <button 
-              onClick={() => {
-                saveToCart(quantities);
-                alert('Added to Cart!');
-              }}
-              className="flex-1 bg-white text-[#1a5c3a] border border-[#1a5c3a] p-2.5 rounded-lg text-xs font-bold text-center hover:bg-[#e8f5ee] active:scale-[0.98] transition-all cursor-pointer"
-            >
-              Add to Cart
-            </button>
+      <div className="bg-[#f0f0ee] py-4 px-3.5 md:px-6 md:py-8 font-sans">
+        <div className="max-w-[1200px] mx-auto bg-white rounded-xl shadow-sm border border-gray-150 p-4 md:p-8">
+          <div className="md:grid md:grid-cols-2 md:gap-10 items-start">
             
-            {biz?.whatsapp === 'mypahad' ? (
-              <button
-                onClick={() => {
-                  saveToCart(quantities);
-                  let cart: any = {};
-                  try { cart = JSON.parse(localStorage.getItem('mp_cart') || '{}'); } catch(e){}
-                  const bizData = cart[bizId];
-                  let items = bizData?.items || [];
+            {/* Left Column: Image Display */}
+            <div className="md:sticky md:top-20">
+              <div className="relative mb-3 bg-white">
+                {listing.image_url ? (
+                  <img src={getOptimizedImageUrl(listing.image_url, 'detail')} alt={listing.name} className="w-full aspect-square object-cover rounded-lg border border-[#e5e7eb] shadow-sm max-h-[500px]" />
+                ) : (
+                  <div className="w-full aspect-square bg-[#e8f5ee] rounded-lg border border-[#e5e7eb] flex items-center justify-center max-h-[500px]">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" strokeWidth="1">
+                      <rect x="3" y="3" width="18" height="18" rx="2"/>
+                      <circle cx="8.5" cy="8.5" r="1.5"/>
+                      <polyline points="21 15 16 10 5 21"/>
+                    </svg>
+                  </div>
+                )}
+                {listing.image_url && <div className="text-[8.5px] text-gray-400 mt-1 text-center italic opacity-75">*Image may not represent actual product</div>}
+                
+                {listing.has_delivery && (
+                  <div className="absolute top-5 right-5 bg-[#1a5c3a]/90 text-white px-2 py-1 rounded text-[9px] font-bold shadow-md flex items-center gap-1 backdrop-blur-[2px]">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="1" y="3" width="15" height="13"/>
+                      <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
+                      <circle cx="5.5" cy="18.5" r="2.5"/>
+                      <circle cx="18.5" cy="18.5" r="2.5"/>
+                    </svg>
+                    Home Delivery Available
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right Column: Title, Prices, Details, Options, Actions, and Sold By */}
+            <div className="flex flex-col gap-4 mt-4 md:mt-0">
+              <div>
+                {/* Listing Title */}
+                <h1 className="text-base md:text-2xl font-bold text-gray-900 leading-tight">{listing.name}</h1>
+                
+                {/* Pricing block */}
+                {listing.discount_price ? (
+                  <div className="flex items-center gap-2 mt-1.5 mb-2">
+                    <span className="text-[#e05a2b] font-bold text-lg md:text-2xl">₹{listing.discount_price}</span>
+                    <span className="line-through text-gray-400 text-sm md:text-base">₹{listing.price}</span>
+                    {discountBadge}
+                  </div>
+                ) : (
+                  listing.price && <div className="text-[#1a5c3a] font-bold text-lg md:text-2xl mt-1 mb-2">₹{listing.price}</div>
+                )}
+              </div>
+
+              {/* Description */}
+              {listing.description && (
+                <div className="text-[12px] md:text-sm text-gray-600 leading-relaxed pt-2 border-t border-gray-100">
+                  <span>
+                    {isDescExpanded
+                      ? listing.description
+                      : listing.description.length > 180
+                      ? listing.description.substring(0, 180) + '...'
+                      : listing.description}
+                  </span>
+                  {listing.description.length > 180 && (
+                    <button
+                      onClick={() => setIsDescExpanded(!isDescExpanded)}
+                      className="text-[#1a5c3a] font-bold ml-1 text-[11px] hover:underline bg-none border-none p-0 cursor-pointer inline-block"
+                    >
+                      {isDescExpanded ? 'Read Less' : 'Read More'}
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Booking required fields */}
+              {listing.booking_required && (
+                <div className="p-3 bg-[#e8f5ee] border border-[#ddd] rounded-lg">
+                  <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2">Booking Information Required</div>
+                  <div className="flex gap-2.5">
+                    <div className="flex-1">
+                      <label className="text-[10px] text-gray-500 font-semibold mb-1 block">Date</label>
+                      <input 
+                        type="date" 
+                        value={bookingDate}
+                        onChange={(e) => setBookingDate(e.target.value)}
+                        className="w-full p-2 border border-[#ddd] rounded text-xs" 
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="text-[10px] text-gray-500 font-semibold mb-1 block">Time</label>
+                      <input 
+                        type="time" 
+                        value={bookingTime}
+                        onChange={(e) => setBookingTime(e.target.value)}
+                        className="w-full p-2 border border-[#ddd] rounded text-xs" 
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Quantities & Options Selector */}
+              {vars.length > 0 ? (
+                <div className="mt-2">
+                  <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2">Options / Sizes (Select Quantity)</div>
+                  <div className="flex flex-col gap-2">
+                    {vars.map((v, idx) => {
+                      const vObj = typeof v === 'string' ? parseLegacyVariant(v) : v;
+                      const qtyVal = quantities[`var-${idx}`] || 0;
+                      
+                      let optionPriceText = null;
+                      if (vObj.discount_price !== null && vObj.discount_price !== undefined) {
+                        const o = parseFloat(vObj.price) || 0;
+                        const d = parseFloat(vObj.discount_price) || 0;
+                        let offBadge = null;
+                        if (o > 0 && d > 0 && o > d) {
+                          const pct = Math.round(((o - d) / o) * 100);
+                          offBadge = <span className="bg-[#e05a2b] text-white text-[7px] font-bold px-1 py-0.5 rounded ml-1">{pct}% OFF</span>;
+                        }
+                        optionPriceText = (
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className="text-[#e05a2b] font-bold text-[11px]">₹{vObj.discount_price}</span>
+                            <span className="line-through text-gray-400 text-[10px]">₹{vObj.price}</span>
+                            {offBadge}
+                          </div>
+                        );
+                      } else if (vObj.price) {
+                        optionPriceText = <div className="text-gray-500 font-semibold text-[11px]">₹{vObj.price}</div>;
+                      }
+
+                      return (
+                        <div key={idx} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-none">
+                          <div>
+                            <div className="text-xs font-semibold text-gray-700">{vObj.name}</div>
+                            {optionPriceText}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button onClick={() => adjustQty(`var-${idx}`, -1)} className="w-6 h-6 rounded-full border border-[#ddd] bg-white flex items-center justify-center text-xs font-bold active:bg-gray-100">-</button>
+                            <span className="text-xs font-semibold w-4 text-center">{qtyVal}</span>
+                            <button onClick={() => adjustQty(`var-${idx}`, 1)} className="w-6 h-6 rounded-full border border-[#ddd] bg-white flex items-center justify-center text-xs font-bold active:bg-gray-100">+</button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex justify-between items-center p-2.5 bg-[#e8f5ee] rounded-lg">
+                  <span className="text-xs font-bold text-gray-700">{listing.qty_label || 'Quantity'}</span>
+                  <div className="flex items-center gap-2.5">
+                    <button onClick={() => adjustQty('main', -1)} className="w-6 h-6 rounded-full border border-[#ddd] bg-white flex items-center justify-center text-xs font-bold active:bg-gray-100">-</button>
+                    <span className="text-xs font-semibold w-4 text-center">{quantities['main'] || 0}</span>
+                    <button onClick={() => adjustQty('main', 1)} className="w-6 h-6 rounded-full border border-[#ddd] bg-white flex items-center justify-center text-xs font-bold active:bg-gray-100">+</button>
+                  </div>
+                </div>
+              )}
+              
+              {/* Inline Actions Row (Cart & Buy Now) */}
+              <div className="mt-2 flex flex-col gap-2 pt-3 border-t border-gray-150">
+                {/* Warning Banner */}
+                {otherBizCartWarning && (
+                  <div className="bg-[#fffcf6] border border-[#ffeeba] rounded-lg p-2.5 text-[10px] text-[#856404] leading-tight flex items-start gap-1.5">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-[#856404] shrink-0 mt-0.5">
+                      <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                      <line x1="12" y1="9" x2="12" y2="13"/>
+                      <line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                    <span><strong>Not the same business!</strong> You have items in your cart from another business. Buying this will start a new cart list.</span>
+                  </div>
+                )}
+                
+                {/* Mini Cart Display */}
+                {cartItems.length > 0 && !miniCartClosed && (
+                  <div className="bg-gray-50 rounded-lg p-2.5 border border-gray-200 flex flex-col gap-1.5 max-h-[140px] overflow-y-auto mb-2">
+                    <div className="flex justify-between items-center pb-1.5 border-b border-gray-200 mb-1">
+                      <span className="text-[10px] font-bold text-[#1a5c3a] flex items-center gap-1">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                        </svg>
+                        Current Cart Items
+                      </span>
+                      <button onClick={() => setMiniCartClosed(true)} className="text-gray-400 hover:text-gray-600 font-bold text-xs px-1">&times;</button>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      {cartItems.map((item, i) => (
+                        <div key={i} className="flex justify-between items-center text-[10px] py-0.5">
+                          <div className="flex items-center gap-1 min-w-0">
+                            <button onClick={(e) => removeMiniCartItem(e, item.id, item.variant)} className="text-[#e05a2b] font-bold text-sm px-1">&times;</button>
+                            <span 
+                              onClick={() => {
+                                if (item.id !== listing.id) {
+                                  triggerNavigationStart();
+                                  router.push(`/listing/${item.id}`);
+                                }
+                              }}
+                              className={`truncate font-medium ${item.id !== listing.id ? 'underline text-[#1a5c3a] cursor-pointer' : 'text-gray-700'}`}
+                            >
+                              {item.name} {item.variant ? `(${item.variant})` : ''}
+                            </span>
+                          </div>
+                          <span className="font-bold text-[#1a5c3a] shrink-0 ml-2">₹{item.price}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex gap-2 w-full">
+                  <button 
+                    onClick={() => {
+                      let updatedQuants = { ...quantities };
+                      const totalCount = getSelectedCount();
+                      if (totalCount === 0) {
+                        if (vars.length > 0) {
+                          updatedQuants['var-0'] = 1;
+                        } else {
+                          updatedQuants['main'] = 1;
+                        }
+                        setQuantities(updatedQuants);
+                      }
+                      saveToCart(updatedQuants);
+                      updateWhatsAppBtn();
+                      renderMiniCart();
+                      updateCartBadge();
+                    }}
+                    className="flex-1 bg-white text-[#1a5c3a] border border-[#1a5c3a] p-2.5 rounded-lg text-xs font-bold text-center hover:bg-[#e8f5ee] active:scale-[0.98] transition-all cursor-pointer"
+                  >
+                    Add to Cart
+                  </button>
                   
-                  if (items.length === 0) {
-                    const qtyLabel = listing.qty_label || 'Quantity';
-                    const priceVal = parsePrice(listing.discount_price || listing.price);
-                    items = [{
-                      id: listing.id,
-                      name: listing.name,
-                      price: priceVal,
-                      variant: null,
-                      quantity: 1,
-                      qty_label: qtyLabel,
-                      booking_date: bookingDate || null,
-                      booking_time: bookingTime || null,
-                      has_delivery: listing.has_delivery
-                    }];
-                  }
-                  
-                  const params = new URLSearchParams();
-                  params.set('biz_id', bizId);
-                  params.set('biz_name', bizName);
-                  params.set('biz_town', townName);
-                  params.set('biz_delivery_charges', biz?.delivery_charges || '0');
-                  if (biz?.latitude) params.set('biz_latitude', String(biz.latitude));
-                  if (biz?.longitude) params.set('biz_longitude', String(biz.longitude));
-                  params.set('biz_whatsapp', biz?.whatsapp || '');
-                  if (biz?.dp_url) params.set('biz_dp', biz.dp_url);
-                  params.set('biz_username', biz?.username || '');
-                  params.set('biz_area_slug', biz?.areas?.slug || '');
-                  params.set('items', JSON.stringify(items));
-                  
-                  window.location.href = `https://chat.mypahad.in?${params.toString()}`;
-                }}
-                className="flex-1 bg-[#1a5c3a] hover:bg-[#154a2e] text-white p-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all cursor-pointer"
-              >
-                Buy Now (Order Chat)
-              </button>
-            ) : (
-              <a 
-                href={whatsappHref} 
-                onClick={(e) => {
-                  saveToCart(quantities);
-                  handleWhatsAppClick();
-                }}
-                target="_blank" 
-                rel="noopener noreferrer"
-                className={`flex-1 bg-[#1a5c3a] text-white p-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all cursor-pointer ${whatsappDisabled ? 'opacity-40 pointer-events-none' : ''}`}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="shrink-0">
-                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/>
-                </svg>
-                <span>Buy Now (Order from WhatsApp)</span>
-              </a>
-            )}
+                  {biz?.whatsapp === 'mypahad' ? (
+                    <button
+                      onClick={() => {
+                        saveToCart(quantities);
+                        let cart: any = {};
+                        try { cart = JSON.parse(localStorage.getItem('mp_cart') || '{}'); } catch(e){}
+                        const bizData = cart[bizId];
+                        let items = bizData?.items || [];
+                        
+                        if (items.length === 0) {
+                          const qtyLabel = listing.qty_label || 'Quantity';
+                          const priceVal = parsePrice(listing.discount_price || listing.price);
+                          items = [{
+                            id: listing.id,
+                            name: listing.name,
+                            price: priceVal,
+                            variant: null,
+                            quantity: 1,
+                            qty_label: qtyLabel,
+                            booking_date: bookingDate || null,
+                            booking_time: bookingTime || null,
+                            has_delivery: listing.has_delivery
+                          }];
+                        }
+                        
+                        const params = new URLSearchParams();
+                        params.set('biz_id', bizId);
+                        params.set('biz_name', bizName);
+                        params.set('biz_town', townName);
+                        params.set('biz_delivery_charges', biz?.delivery_charges || '0');
+                        if (biz?.latitude) params.set('biz_latitude', String(biz.latitude));
+                        if (biz?.longitude) params.set('biz_longitude', String(biz.longitude));
+                        params.set('biz_whatsapp', biz?.whatsapp || '');
+                        if (biz?.dp_url) params.set('biz_dp', biz.dp_url);
+                        params.set('biz_username', biz?.username || '');
+                        params.set('biz_area_slug', biz?.areas?.slug || '');
+                        params.set('items', JSON.stringify(items));
+                        
+                        window.location.href = `https://chat.mypahad.in?${params.toString()}`;
+                      }}
+                      className="flex-1 bg-[#1a5c3a] hover:bg-[#154a2e] text-white p-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all cursor-pointer"
+                    >
+                      Buy Now (Order Chat)
+                    </button>
+                  ) : (
+                    <a 
+                      href={whatsappHref} 
+                      onClick={(e) => {
+                        saveToCart(quantities);
+                        handleWhatsAppClick();
+                      }}
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className={`flex-1 bg-[#1a5c3a] text-white p-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all cursor-pointer ${whatsappDisabled ? 'opacity-40 pointer-events-none' : ''}`}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="shrink-0">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/>
+                      </svg>
+                      <span>Buy Now (Order from WhatsApp)</span>
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              {/* Sold By Info Box */}
+              {biz && (
+                <div className="bg-white border border-[#ddd] p-3 rounded-lg mt-2">
+                  <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2">Sold By</div>
+                  <div 
+                    onClick={() => {
+                      triggerNavigationStart();
+                      const areaSlug = biz?.areas?.slug || '';
+                      const bizUsername = biz?.username || 'shop';
+                      localStorage.setItem('mp_view_biz', bizId);
+                      localStorage.setItem('mp_prof_back', getListingLink(bizUsername, generateSlug(listing.name), areaSlug));
+                      router.push(getBusinessLink(bizUsername, areaSlug));
+                    }}
+                    className="flex items-center gap-3 p-2 rounded-lg border border-[#eee] hover:bg-[#e8f5ee] cursor-pointer transition-colors"
+                  >
+                    <div className="w-9 h-9 rounded-full overflow-hidden border border-[#ddd] shrink-0 bg-gray-50 flex items-center justify-center">
+                      {biz.dp_url ? (
+                        <img src={getOptimizedImageUrl(biz.dp_url, 'dp')} className="w-full h-full object-cover" alt={bizName} />
+                      ) : (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" strokeWidth="1.5">
+                          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+                        </svg>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-bold text-gray-800 truncate">{bizName}</div>
+                      <div className="text-[10px] text-gray-400 truncate mt-0.5">
+                        {townName && townName.toLowerCase() !== 'all' && townName.toLowerCase() !== 'mypahad' && townName.toLowerCase() !== 'other' ? `${townName} · ` : ''}View profile →
+                      </div>
+                    </div>
+                    <span className="text-gray-400 text-sm">›</span>
+                  </div>
+                </div>
+              )}
+
+            </div>
           </div>
         </div>
       </div>
-
-      {/* Sold By Info Box */}
-      {biz && (
-        <div className="bg-white border-t-4 border-[#f0f0ee] p-3.5">
-          <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2">Sold By</div>
-          <div 
-            onClick={() => {
-              triggerNavigationStart();
-              const areaSlug = biz?.areas?.slug || '';
-              const bizUsername = biz?.username || 'shop';
-              localStorage.setItem('mp_view_biz', bizId);
-              localStorage.setItem('mp_prof_back', getListingLink(bizUsername, generateSlug(listing.name), areaSlug));
-              router.push(getBusinessLink(bizUsername, areaSlug));
-            }}
-            className="flex items-center gap-3 p-2 rounded-lg border border-[#ddd] hover:bg-[#e8f5ee] cursor-pointer transition-colors"
-          >
-            <div className="w-9 h-9 rounded-full overflow-hidden border border-[#ddd] shrink-0 bg-gray-50 flex items-center justify-center">
-              {biz.dp_url ? (
-                <img src={getOptimizedImageUrl(biz.dp_url, 'dp')} className="w-full h-full object-cover" alt={bizName} />
-              ) : (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" strokeWidth="1.5">
-                  <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
-                </svg>
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-xs font-bold text-gray-800 truncate">{bizName}</div>
-              <div className="text-[10px] text-gray-400 truncate mt-0.5">
-                {townName && townName.toLowerCase() !== 'all' && townName.toLowerCase() !== 'mypahad' ? `${townName} · ` : ''}View profile →
-              </div>
-            </div>
-            <span className="text-gray-400 text-sm">›</span>
-          </div>
-        </div>
-      )}
 
       {/* Related Products Section */}
       {relatedListings.length > 0 && (

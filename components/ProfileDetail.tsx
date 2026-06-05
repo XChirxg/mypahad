@@ -532,7 +532,7 @@ export default function ProfileDetail({ business, photos, initialListings, initi
             </svg>
             <span>MyPahad</span>
           </Link>
-          {townName && townName.toLowerCase() !== 'all' && townName.toLowerCase() !== 'mypahad' && (
+          {townName && townName.toLowerCase() !== 'all' && townName.toLowerCase() !== 'mypahad' && townName.toLowerCase() !== 'other' && (
             <span className="text-[10px] text-white/70 border-l border-white/30 pl-2 leading-none">
               {townName}
             </span>
@@ -598,7 +598,7 @@ export default function ProfileDetail({ business, photos, initialListings, initi
             </div>
             
             <div className="text-[10px] text-gray-400 mt-0.5">
-              {business.categories?.name}{(townName && townName.toLowerCase() !== 'all' && townName.toLowerCase() !== 'mypahad') ? ` · ${townName}` : ''}
+              {business.categories?.name}{(townName && townName.toLowerCase() !== 'all' && townName.toLowerCase() !== 'mypahad' && townName.toLowerCase() !== 'other') ? ` · ${townName}` : ''}
             </div>
           </div>
         </div>
@@ -749,7 +749,7 @@ export default function ProfileDetail({ business, photos, initialListings, initi
 
         {activeTab === 'items' && (
           <div className="pt-3">
-            <div className="grid grid-cols-3 gap-1.5 px-3.5">
+            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1.5 px-3.5">
               {listings.map(l => {
                 const orig = parsePriceVal(l.price);
                 const disc = parsePriceVal(l.discount_price);

@@ -692,7 +692,7 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
                 </div>
                 
                 {isLoading ? (
-                  <div className="grid grid-cols-3 gap-1.5 px-1">
+                  <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1.5 px-1">
                     {[...Array(3)].map((_, i) => (
                       <div key={i} className="bg-white rounded border border-[#ddd] overflow-hidden">
                         <div className="w-full aspect-square shim"></div>
@@ -705,7 +705,7 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
                   </div>
                 ) : (
                   <>
-                    <div className="grid grid-cols-3 gap-1.5 px-1">
+                    <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1.5 px-1">
                       {listings.map(l => (
                         <div 
                           key={l.id} 
@@ -786,7 +786,7 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
           </div>
 
           {loadingDetail ? (
-            <div className="grid grid-cols-3 gap-1.5 p-3">
+            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1.5 p-3">
               {[...Array(6)].map((_, i) => (
                 <div key={i} className="bg-white rounded border border-[#ddd] overflow-hidden">
                   <div className="w-full aspect-square shim"></div>
@@ -799,7 +799,7 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-3 gap-1.5 p-3">
+              <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1.5 p-3">
                 {detailListings.length === 0 ? (
                   <div className="col-span-3 text-center py-8 text-gray-400 text-xs">
                     No listings found in this category.
