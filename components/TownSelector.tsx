@@ -250,18 +250,13 @@ export default function TownSelector({ initialAreas }: TownSelectorProps) {
         </div>
       )}
       
-      <div className="text-center mb-10">
+      <div className="text-center mb-10 flex flex-col items-center">
         <img 
-          src="/logoGreen.png" 
+          src="/logoGreen.svg" 
           className="h-14 w-auto mx-auto mb-2" 
           alt="MyPahad Logo"
-          onError={(e) => {
-            (e.target as HTMLElement).style.display = 'none';
-            const lt = document.getElementById('lt');
-            if (lt) lt.style.display = 'block';
-          }}
         />
-        <div id="lt" className="text-3xl font-bold text-[#1a5c3a] tracking-tight hidden">MyPahad</div>
+        <div className="text-3xl font-bold text-[#1a5c3a] tracking-tight">MyPahad</div>
         <div className="text-xs text-gray-400 mt-1 font-medium">Apne Pahad ka Bazaar</div>
       </div>
 
