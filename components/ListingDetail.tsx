@@ -47,6 +47,87 @@ interface Listing {
   businesses?: Business;
 }
 
+const formatDescription = (desc: string | null) => {
+  if (!desc) return null;
+  
+  const lines = desc.split('\n');
+  const renderedElements: React.ReactNode[] = [];
+  let currentList: React.ReactNode[] = [];
+  
+  const flushList = (key: string) => {
+    if (currentList.length > 0) {
+      renderedElements.push(
+        <ul key={key} className="list-none pl-0 my-2 flex flex-col gap-1.5">
+          {currentList}
+        </ul>
+      );
+      currentList = [];
+    }
+  };
+
+  lines.forEach((line, index) => {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      flushList(`list-${index}`);
+      return;
+    }
+
+    // Check if it is a list item
+    const listMatch = trimmed.match(/^[-*•+]\s+(.*)$/);
+    if (listMatch) {
+      const content = listMatch[1];
+      currentList.push(
+        <li key={`li-${index}`} className="flex items-start gap-2 text-xs md:text-sm text-gray-700">
+          <span className="text-[#1a5c3a] font-bold text-sm leading-none mt-0.5">•</span>
+          <span>{content}</span>
+        </li>
+      );
+      return;
+    }
+
+    // Since it's not a list item, flush any accumulated list items first
+    flushList(`list-${index}`);
+
+    // Check if it is a key-value pair (e.g. "Duration: 5 Days", "Includes: Food, Guide")
+    const kvMatch = trimmed.match(/^([^:\n]+)\s*:\s*([^:\n]+)$/);
+    if (kvMatch && kvMatch[1].length < 25 && !trimmed.startsWith('http')) {
+      const key = kvMatch[1].trim();
+      const value = kvMatch[2].trim();
+      renderedElements.push(
+        <div key={`kv-${index}`} className="flex justify-between items-center py-1 border-b border-gray-100 text-xs md:text-sm my-1">
+          <span className="font-semibold text-gray-500">{key}</span>
+          <span className="font-medium text-gray-800 text-right">{value}</span>
+        </div>
+      );
+      return;
+    }
+
+    // Check if it is a heading/title block (starts with # or all caps and short)
+    const isHeading = trimmed.startsWith('###') || trimmed.startsWith('##') || (trimmed.length < 35 && trimmed === trimmed.toUpperCase() && !trimmed.match(/[0-9:]/));
+    if (isHeading) {
+      const cleanHeading = trimmed.replace(/^#+\s*/, '');
+      renderedElements.push(
+        <h4 key={`h-${index}`} className="font-bold text-gray-900 text-xs md:text-sm mt-3 mb-1.5 uppercase tracking-wide border-b border-gray-100 pb-0.5">
+          {cleanHeading}
+        </h4>
+      );
+      return;
+    }
+
+    // Standard paragraph text
+    renderedElements.push(
+      <p key={`p-${index}`} className="text-xs md:text-sm text-gray-700 my-1 leading-relaxed whitespace-pre-wrap">
+        {trimmed}
+      </p>
+    );
+  });
+
+  // Flush any trailing list items
+  flushList(`list-final`);
+
+  return <div className="space-y-1">{renderedElements}</div>;
+};
+
 interface ListingDetailProps {
   listing: Listing;
   relatedListings: Listing[];
@@ -652,17 +733,16 @@ export default function ListingDetail({ listing, relatedListings }: ListingDetai
               {/* Description */}
               {listing.description && (
                 <div className="text-[12px] md:text-sm text-gray-600 leading-relaxed pt-2 border-t border-gray-100">
-                  <span>
-                    {isDescExpanded
-                      ? listing.description
-                      : listing.description.length > 180
-                      ? listing.description.substring(0, 180) + '...'
-                      : listing.description}
-                  </span>
+                  <div className={`relative transition-all duration-300 ${!isDescExpanded && listing.description.length > 180 ? 'max-h-[140px] overflow-hidden' : 'max-h-none'}`}>
+                    {formatDescription(listing.description)}
+                    {!isDescExpanded && listing.description.length > 180 && (
+                      <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-white to-transparent pointer-events-none" />
+                    )}
+                  </div>
                   {listing.description.length > 180 && (
                     <button
                       onClick={() => setIsDescExpanded(!isDescExpanded)}
-                      className="text-[#1a5c3a] font-bold ml-1 text-[11px] hover:underline bg-none border-none p-0 cursor-pointer inline-block"
+                      className="text-[#1a5c3a] font-bold text-[11px] hover:underline bg-none border-none p-0 mt-2 cursor-pointer block"
                     >
                       {isDescExpanded ? 'Read Less' : 'Read More'}
                     </button>
