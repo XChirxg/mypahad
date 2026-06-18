@@ -607,10 +607,8 @@ export default function ListingDetail({ listing, relatedListings }: ListingDetai
       <div className="bg-[#1a5c3a] p-2 px-3 flex items-center justify-between gap-2 sticky top-0 z-50 shadow-sm">
         <div className="flex items-center gap-2">
           <Link href={typeof window !== 'undefined' ? localStorage.getItem('mp_lst_back') || '/' : '/'} className="text-white text-base font-bold tracking-tight flex items-center gap-1.5" style={{ color: 'white' }}>
-            <svg viewBox="0 0 690 690" className="w-6 h-6 text-white shrink-0" role="img" xmlns="http://www.w3.org/2000/svg">
-              <polygon points="170,480 310,200 450,480" fill="currentColor" opacity="0.18" />
-              <polygon points="310,480 460,240 610,480" fill="currentColor" opacity="0.30" />
-              <polygon points="210,480 370,170 530,480" fill="currentColor" opacity="0.80" />
+            <svg viewBox="0 0 815.87 616.68" className="w-6 h-6 text-white shrink-0" role="img" xmlns="http://www.w3.org/2000/svg">
+              <path d="M13.57,572.97 C-14.62,339.44 2.09,154.1 54.52,6.42 C131.36,20.31 232.4,73.22 354.99,164.82 C404.05,86.33 455.12,32.57 500.69,0 C663.72,152.93 769.22,344.53 815.87,575.22 C672.26,616.9 459.11,628.39 186.41,604.02 C196.86,520.39 228.65,425.92 266.84,328.03 L188.35,216.96 L87.47,383.14 L136.67,386.07 L70.38,505.35 L136.98,507.05 L136.13,597.9 C87.58,590.41 37.72,582.23 13.57,572.97 Z" fill="currentColor" fillRule="evenodd" />
             </svg>
             <span>MyPahad</span>
           </Link>
