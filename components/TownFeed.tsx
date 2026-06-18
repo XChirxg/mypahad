@@ -648,8 +648,8 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
                   <img src={getOptimizedImageUrl(l.image_url, 'card')} className="w-full h-[70px] object-cover bg-gray-100" alt={l.name} loading="lazy" />
                 ) : (
                   <div className="w-full h-[70px] bg-[#e8f5ee] flex items-center justify-center">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" strokeWidth="1.5">
-                      <rect x="3" y="3" width="18" height="18" rx="2"/>
+                    <svg viewBox="0 0 815.87 616.68" className="w-4 h-4 text-[#1a5c3a]" role="img" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M13.57,572.97 C-14.62,339.44 2.09,154.1 54.52,6.42 C131.36,20.31 232.4,73.22 354.99,164.82 C404.05,86.33 455.12,32.57 500.69,0 C663.72,152.93 769.22,344.53 815.87,575.22 C672.26,616.9 459.11,628.39 186.41,604.02 C196.86,520.39 228.65,425.92 266.84,328.03 L188.35,216.96 L87.47,383.14 L136.67,386.07 L70.38,505.35 L136.98,507.05 L136.13,597.9 C87.58,590.41 37.72,582.23 13.57,572.97 Z" fill="currentColor" fillRule="evenodd" />
                     </svg>
                   </div>
                 )}
@@ -714,10 +714,8 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
                             <img src={getOptimizedImageUrl(l.image_url, 'card')} className="w-full aspect-square object-cover" alt={l.name} loading="lazy" />
                           ) : (
                             <div className="w-full aspect-square bg-[#e8f5ee] flex items-center justify-center">
-                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" strokeWidth="1.5">
-                                <rect x="3" y="3" width="18" height="18" rx="2"/>
-                                <circle cx="8.5" cy="8.5" r="1.5"/>
-                                <polyline points="21 15 16 10 5 21"/>
+                              <svg viewBox="0 0 815.87 616.68" className="w-5 h-5 text-[#1a5c3a]" role="img" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M13.57,572.97 C-14.62,339.44 2.09,154.1 54.52,6.42 C131.36,20.31 232.4,73.22 354.99,164.82 C404.05,86.33 455.12,32.57 500.69,0 C663.72,152.93 769.22,344.53 815.87,575.22 C672.26,616.9 459.11,628.39 186.41,604.02 C196.86,520.39 228.65,425.92 266.84,328.03 L188.35,216.96 L87.47,383.14 L136.67,386.07 L70.38,505.35 L136.98,507.05 L136.13,597.9 C87.58,590.41 37.72,582.23 13.57,572.97 Z" fill="currentColor" fillRule="evenodd" />
                               </svg>
                             </div>
                           )}
@@ -813,10 +811,8 @@ export default function TownFeed({ area, initialStories, initialAds, initialCate
                         <img src={getOptimizedImageUrl(l.image_url, 'card')} className="w-full aspect-square object-cover" alt={l.name} loading="lazy" />
                       ) : (
                         <div className="w-full aspect-square bg-[#e8f5ee] flex items-center justify-center">
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1a5c3a" strokeWidth="1.5">
-                            <rect x="3" y="3" width="18" height="18" rx="2"/>
-                            <circle cx="8.5" cy="8.5" r="1.5"/>
-                            <polyline points="21 15 16 10 5 21"/>
+                          <svg viewBox="0 0 815.87 616.68" className="w-5 h-5 text-[#1a5c3a]" role="img" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M13.57,572.97 C-14.62,339.44 2.09,154.1 54.52,6.42 C131.36,20.31 232.4,73.22 354.99,164.82 C404.05,86.33 455.12,32.57 500.69,0 C663.72,152.93 769.22,344.53 815.87,575.22 C672.26,616.9 459.11,628.39 186.41,604.02 C196.86,520.39 228.65,425.92 266.84,328.03 L188.35,216.96 L87.47,383.14 L136.67,386.07 L70.38,505.35 L136.98,507.05 L136.13,597.9 C87.58,590.41 37.72,582.23 13.57,572.97 Z" fill="currentColor" fillRule="evenodd" />
                           </svg>
                         </div>
                       )}
