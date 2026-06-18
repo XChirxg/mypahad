@@ -111,13 +111,18 @@ export default function TopLoader() {
   if (!visible) return null;
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[9999] pointer-events-none">
-      <div
-        className="h-1 bg-[#e05a2b] shadow-[0_1px_10px_#e05a2b] transition-all duration-300 ease-out"
-        style={{
-          width: `${progress}%`,
-        }}
-      />
+    <div className="fixed inset-0 bg-white z-[99999] flex flex-col items-center justify-center cursor-wait">
+      <div className="flex flex-col items-center gap-4 animate-fadeIn">
+        {/* Pulsing Brand Logo */}
+        <div className="animate-pulse duration-1000">
+          <svg viewBox="0 0 815.87 616.68" className="w-16 h-16 text-[#1a5c3a]" role="img" xmlns="http://www.w3.org/2000/svg">
+            <path d="M13.57,572.97 C-14.62,339.44 2.09,154.1 54.52,6.42 C131.36,20.31 232.4,73.22 354.99,164.82 C404.05,86.33 455.12,32.57 500.69,0 C663.72,152.93 769.22,344.53 815.87,575.22 C672.26,616.9 459.11,628.39 186.41,604.02 C196.86,520.39 228.65,425.92 266.84,328.03 L188.35,216.96 L87.47,383.14 L136.67,386.07 L70.38,505.35 L136.98,507.05 L136.13,597.9 C87.58,590.41 37.72,582.23 13.57,572.97 Z" fill="currentColor" fillRule="evenodd" />
+          </svg>
+        </div>
+        
+        {/* Spinner */}
+        <div className="w-6 h-6 rounded-full border-2 border-[#1a5c3a]/25 border-t-[#1a5c3a] animate-spin" />
+      </div>
     </div>
   );
 }
